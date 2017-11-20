@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+  <link rel="stylesheet" href="index.css">
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+</head>
+
+<body>
+	<div class="filters">
+		<select class="speciesSelect"></select>
+		<input type="checkbox" class="checkbox"> <div class="checkboxText"> Filter by circle intersection </div>
+		<select class="diameterSelect"></select>
+		<input class="diameterInput"> <div class="diameterText"> inches* </div>
+		<div class="detailText"> *Diameter at breast height. Trees with blank diameters are not included in the diameter filter </div>
+		<input type="range" min="0" max="140" class="diameterSlider"></input>
+	</div>
+	<div class="visArea"></div>
+</body>
+
+<script src="index.js"></script>
