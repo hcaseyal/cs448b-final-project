@@ -51,24 +51,18 @@ function getSummonerInfo(req, res, name) {
 }
 
 function getMatchlist(req, res, id) {
-	console.log("1!!!");
 	var url = `${baseURL}match/v3/matchlists/by-account/${id}?api_key=${apiKey}`;
-	console.log(url);
-	console.log("2!!!");
 	
 	axios.get(url)
 	.then(response => {
-		console.log("3!!!");
 		fs.writeFile("matchlist_" + id, JSON.stringify(response.data), function(err) {
 			if(err) {
-				console.log("4!!!!!!!");
 				console.log(err);
 			}
 			else {
 				console.log("File saved");
 			}
 		});
-		console.log("5!!!!");
 		res.send(response.data);
 		console.log(response);
 	})
