@@ -1,3 +1,7 @@
+// Example URL for requesting from RIOT API:
+// https://na1.api.riotgames.com/lol/summoner/v3/summoners/by-name/RiotSchmick?api_key=RGAPI-0c3f4dea-5a44-40ce-b29d-88e00f218389
+// Requests the summoner object for RiotSchmick
+
 var http = require('http');
 const axios = require('axios');
 var express = require('express');
@@ -33,61 +37,154 @@ app.get('/matchlist', function (req, res) {
 
 app.listen(port, function () {
 	//TODO: remove prefetchData
-	//prefetchData();
-	prefetchMasterLeagueMatchData();
+	//prefetchFavoritesMatchData();
+	prefetchMasterLeagueMatchListData();
+	prefetchTimelinesData();
 	console.log(`Server running at http://localhost:${port}/`)
 });
 
+function onMatchlistFileContent(filename, content, requestContext, gameIdCache) {
+	var matches = JSON.parse(content);
+	for (var i = 0; i < matches.length; i++) {
+		var gameId = matches[i].gameId;
 
-function prefetchData() {
-	var summonerList = 
-	["Trick2g", "Hikashikun", "Sirhcez", "Amrasarfeiniel", 
-	"FlowerKitten", "Reignover", "Meteos", "IWDominate", "Voyboy", "Doublelift", "Bjergsen",
-	"Svenskeren", "HotGuySixPack", "Xmithie", "ILovePotatoChips", "xNaotox"];
-
-	var requestId = 0;
-	for (var i = 0; i < summonerList.length; i++) {
-		let name = summonerList[i];
-		fetchSummonerInfo(name).then((info) => {
-			console.log(info);
-			for (let index = 0; index < 1000; index += 100) {
-				setTimeout(() => fetchMatchlist(info.accountId, name, index), 1500 * requestId);
-				requestId++;
-			}
-		});
+		if (!gameIdCache[gameId]) {
+			// For each game that hasn't already been cached, 
+			// get the timeline and details from Riot and write it to a file
+			setTimeout(() => {
+				fetchAndWriteTimelineAndMatchDetails(gameId);
+			}, 3000 * requestContext.requestId);
+			requestContext.requestId++;
+			gameIdCache[gameId] = true;
+		}
 	}
 }
 
-function prefetchMasterLeagueMatchData() {
-	fetchMasterLeague().then((master) => {
-		var requestId = 0;
-		for (let i = 0; i < master.entries.length; i++) {
+function onError(err) {
+	console.log(err);
+}
+
+function prefetchTimelinesData() {
+	var requestContext = {requestId: 0};
+	var gameIdCache = {};
+	readFiles("./matchlist_data", function(filename, content) {
+		onMatchlistFileContent(filename, content, requestContext, gameIdCache)
+	},
+	onError);
+}
+
+function readFiles(dirname, onFileContent, onError) {
+  fs.readdir(dirname, function(err, filenames) {
+    if (err) {
+      onError(err);
+      return;
+    }
+    filenames.forEach(function(filename) {
+      fs.readFile(dirname + filename, 'utf-8', function(err, content) {
+        if (err) {
+          onError(err);
+          return;
+        }
+        onFileContent(filename, content);
+      });
+    });
+  });
+}
+function prefetchFavoritesMatchData() {
+	var summonerList = 
+	["Trick2g", "Hikashikun", "Sirhcez", "Amrasarfeiniel", 
+	"FlowerKitten", "Reignover", "Meteos", "Voyboy", "Doublelift", "Bjergsen",
+	"Svenskeren", "HotGuySixPack", "Xmithie", "ILovePotatoChips", "xNaotox"];
+
+	prefetchMatchListData(summonerList);
+}
+
+function prefetchMatchListData(summonerNames) {
+	console.log(summonerNames);
+		var requestContext = {requestId: 0};
+		for (let i = 0; i < summonerNames.length; i++) {
+			let name = summonerNames[i];
 			setTimeout(() => {
-				let name = master.entries[i].playerOrTeamName;
 				fetchSummonerInfo(name).then((info) => {
-					for (let index = 0; index < 1000; index += 100) {
-						setTimeout(() => fetchMatchlist(info.accountId, name, index), 1500 * requestId);
-						requestId++;
-					}
+					fetchAndWriteMatchList(info, name, requestContext);
 				});
-			}, 1500 * requestId);
-			requestId++;
+			}, 1500 * requestContext.requestId);
+			requestContext.requestId++;
 		}
+}
+
+function fetchAndWriteMatchList(info, name, requestContext) {
+	let promises = [];
+	for (let index = 0; index < 1000; index += 100) {
+		promises.push(new Promise((resolve, reject) => {
+			setTimeout(() => fetchMatchlist(info.accountId, name, index, resolve), 1500 * requestContext.requestId);
+		}));
+		requestContext.requestId++;
+	}
+
+	//matchlists is an array of the 100Matchlists
+	Promise.all(promises).then(matchLists => {
+		let matches = matchLists.reduce((prev, next) => prev.concat(next.matches), []);
+		fs.writeFile("matchlist_data/matchlist_" + info.accountId + "_" + name, JSON.stringify(matches), function(err) {
+			if(err) {
+				console.log(err);
+			}
+			else {
+				console.log("File saved");
+			}
+		});
+	});
+}
+
+function fetchAndWriteTimelineAndMatchDetails(gameId) {
+	var timelineUrl = `${baseURL}/lol/match/v3/timelines/by-match/${gameId}?api_key=${apiKey}`;
+	axios.get(timelineURl)
+		.then(response => {
+			fs.writeFile("timeline_data/timeline_" + gameId, JSON.stringify(response.data), function(err) {
+				if(err) {
+					console.log(err);
+				}
+				else {
+					console.log("File saved");
+				}
+			});
+		});
+
+	var matchDetailsUrl = `${baseURL}/lol/match/v3/matches/${matchId}?api_key=${apiKey}`;
+
+	axios.get(matchDetailsUrl);
+	.then(response => {
+		fs.writeFile("matchdetails_data/matchdetails_" + gameId, JSON.stringify(response.data), function(err) {
+			if(err) {
+				console.log(err);
+			}
+			else {
+				console.log("File saved");
+			}
+		});
+	});
+}
+
+function prefetchMasterLeagueMatchListData() {
+	fetchMasterLeague().then((master) => {
+		var names = master.entries.map(entry => entry.playerOrTeamName);
+		prefetchMatchListData(names);
 	});
 }
 
 function fetchMasterLeague() {
 	var url = `${baseURL}league/v3/masterleagues/by-queue/RANKED_SOLO_5x5?api_key=${apiKey}`;
 	return axios.get(url)
-	.then(response => {
-		return response.data;
-	})
-	.catch(error => {
-		console.log(error);
-	});
+		.then(response => {
+			return response.data;
+		})
+		.catch(error => {
+			console.log(error);
+		});
 }
 
 function fetchSummonerInfo(name) {
+	console.log("Fetching summoner info for " + name);
 	var url = encodeURI(`${baseURL}summoner/v3/summoners/by-name/${name}?api_key=${apiKey}`);
 	return axios.get(url)
 	.then(response => {
@@ -98,19 +195,13 @@ function fetchSummonerInfo(name) {
 	});
 }
 
-function fetchMatchlist(accountId, name, beginIndex) {
+function fetchMatchlist(accountId, name, beginIndex, resolve) {
+	console.log("Fetching match list for " + name);
 	var url = `${baseURL}match/v3/matchlists/by-account/${accountId}?api_key=${apiKey}&beginIndex=${beginIndex}`;
 	
 	axios.get(url)
 	.then(response => {
-		fs.appendFile("data/matchlist_" + accountId + "_" + name, JSON.stringify(response.data), function(err) {
-			if(err) {
-				console.log(err);
-			}
-			else {
-				console.log("File saved");
-			}
-		});
+		resolve(response.data);
 	})
 	.catch(error => {
 		console.log(error);
