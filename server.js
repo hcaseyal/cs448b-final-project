@@ -27,26 +27,76 @@ app.get('/summoner', function (req, res) {
 });
 
 app.get('/matchlist', function (req, res) {
-	console.log(req);
 	var id = req.param("accountId");
 	getMatchlist(req, res, id);
 });
 
 app.listen(port, function () {
+	//TODO: remove prefetchData
+	prefetchData();
 	console.log(`Server running at http://localhost:${port}/`)
 });
 
+function prefetchData() {
+	var summonerList = 
+	["Trick2g", "Hikashikun", "Sirhcez", "Amrasarfeiniel", 
+	"FlowerKitten", "Reignover", "Meteos", "IWDominate", "Voyboy", "Doublelift", "Bjergsen",
+	"Svenskeren", "HotGuySixPack", "Xmithie", "ILovePotatoChips", "xNaotox"];
+
+	var requestId = 0;
+	for (var i = 0; i < summonerList.length; i++) {
+		let name = summonerList[i];
+		fetchSummonerInfo(name).then((info) => {
+			console.log(info);
+			for (var index = 0; index < 1000; index += 100) {
+				setTimeout(() => fetchMatchlist(info.accountId, name, index), 1500 * requestId);
+				requestId++;
+			}
+		});
+	}
+}
+
+
+function fetchSummonerInfo(name) {
+	var url = `${baseURL}summoner/v3/summoners/by-name/${name}?api_key=${apiKey}`;
+	return axios.get(url)
+	.then(response => {
+		console.log(response);
+		return response.data;
+	})
+	.catch(error => {
+		//console.log(error);
+	});
+}
+
+function fetchMatchlist(accountId, name, beginIndex) {
+	var url = `${baseURL}match/v3/matchlists/by-account/${accountId}?api_key=${apiKey}`;
+	
+	axios.get(url)
+	.then(response => {
+		fs.appendFile("matchlist_" + accountId + "_" + name, JSON.stringify(response.data), function(err) {
+			if(err) {
+				//console.log(err);
+			}
+			else {
+				console.log("File saved");
+			}
+		});
+	})
+	.catch(error => {
+		//console.log(error);
+	});
+}
 
 function getSummonerInfo(req, res, name) {
 	var url = `${baseURL}summoner/v3/summoners/by-name/${name}?api_key=${apiKey}`;
 	axios.get(url)
 	.then(response => {
 		res.send(response.data);
-		console.log(response);
 	})
 	.catch(error => {
 		res.send(error);
-		console.log(error);
+		//console.log(error);
 	});
 }
 
@@ -57,17 +107,16 @@ function getMatchlist(req, res, id) {
 	.then(response => {
 		fs.writeFile("matchlist_" + id, JSON.stringify(response.data), function(err) {
 			if(err) {
-				console.log(err);
+				//console.log(err);
 			}
 			else {
 				console.log("File saved");
 			}
 		});
 		res.send(response.data);
-		console.log(response);
 	})
 	.catch(error => {
 		res.send(error);
-		console.log(error);
+		//console.log(error);
 	});
 }
