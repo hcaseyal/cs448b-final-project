@@ -1,0 +1,27 @@
+{
+  "name": "final-project",
+  "version": "1.0.0",
+  "description": "To use: clone the repository npm install axios@0.16.2",
+  "main": "server.js",
+  "dependencies": {
+    "axios": "^0.16.2",
+    "express": "^4.16.2",
+    "handlebars": "^4.0.11",
+    "request": "^2.81.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hcaseyal/cs448b-final-project.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hcaseyal/cs448b-final-project/issues"
+  },
+  "homepage": "https://github.com/hcaseyal/cs448b-final-project#readme"
+}

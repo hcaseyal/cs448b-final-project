@@ -6,15 +6,13 @@
 </head>
 
 <body>
-	<div class="filters">
-		<select class="speciesSelect"></select>
-		<input type="checkbox" class="checkbox"> <div class="checkboxText"> Filter by circle intersection </div>
-		<select class="diameterSelect"></select>
-		<input class="diameterInput"> <div class="diameterText"> inches* </div>
-		<div class="detailText"> *Diameter at breast height. Trees with blank diameters are not included in the diameter filter </div>
-		<input type="range" min="0" max="140" class="diameterSlider"></input>
+	<div class="summoner-name-wrapper">Summoner: 
+		<input class="summoner-name"></input>
+		<input type="button" class="enter-btn" value="Enter" onclick="onEnterButtonPress"></input>
 	</div>
-	<div class="visArea"></div>
+	<div class="filters"></div>
+	<div class="vis-area"></div>
+	<div class="analysis-area"></div>
 </body>
 
 <script src="index.js"></script>
