@@ -2,10 +2,11 @@ var http = require('http');
 const axios = require('axios');
 var express = require('express');
 var app = express();
+var fs = require('fs');
 
 const port = 8080; 
 var baseURL = 'https://na1.api.riotgames.com/lol/';
-var apiKey = 'RGAPI-0c3f4dea-5a44-40ce-b29d-88e00f218389';
+var apiKey = 'RGAPI-94236ef3-39fa-4112-80d7-ea1a480207c9';
 
 app.use(function (req, res, next) {
 	res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8000');
@@ -21,18 +22,53 @@ app.use(function (req, res, next) {
 });
 
 app.get('/summoner', function (req, res) {
-	var name = req.param('name');
-	makeRequestToRiot(req, res, name);
+	var name = req.param("name");
+	getSummonerInfo(req, res, name);
+});
+
+app.get('/matchlist', function (req, res) {
+	console.log(req);
+	var id = req.param("accountId");
+	getMatchlist(req, res, id);
 });
 
 app.listen(port, function () {
 	console.log(`Server running at http://localhost:${port}/`)
 });
 
-function makeRequestToRiot(req, res, name) {
+
+function getSummonerInfo(req, res, name) {
 	var url = `${baseURL}summoner/v3/summoners/by-name/${name}?api_key=${apiKey}`;
 	axios.get(url)
 	.then(response => {
+		res.send(response.data);
+		console.log(response);
+	})
+	.catch(error => {
+		res.send(error);
+		console.log(error);
+	});
+}
+
+function getMatchlist(req, res, id) {
+	console.log("1!!!");
+	var url = `${baseURL}match/v3/matchlists/by-account/${id}?api_key=${apiKey}`;
+	console.log(url);
+	console.log("2!!!");
+	
+	axios.get(url)
+	.then(response => {
+		console.log("3!!!");
+		fs.writeFile("matchlist_" + id, JSON.stringify(response.data), function(err) {
+			if(err) {
+				console.log("4!!!!!!!");
+				console.log(err);
+			}
+			else {
+				console.log("File saved");
+			}
+		});
+		console.log("5!!!!");
 		res.send(response.data);
 		console.log(response);
 	})
