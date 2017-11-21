@@ -5,3 +5,15 @@
 .enter-btn {
 	
 }
+
+.kills {
+	fill: blue;
+}
+
+.deaths {
+	fill: red;
+}
+
+.assists {
+	fill: purple;
+}

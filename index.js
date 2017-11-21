@@ -30,7 +30,7 @@ function searchForSummoner(summoner) {
 	xhttp.open("GET", url);
 	xhttp.onload = () => {
 		var data = JSON.parse(xhttp.responseText);
-		dispalySummonerInfo(data);
+		displaySummonerInfo(data);
 		renderMapKda(receiveKdaData(data));
 		displayAnalysis(data);
 	}
@@ -48,27 +48,44 @@ function receiveKdaData(data) {
 	var deaths = [];
 	var assists = [];
 
-	for (var i = 0; i < timelines.length; i++) {
-		var match = timelines[i];
-		for (var j in match) {
-			var matchInfoAtMinute = match[j];
-			for (var eventIndex in matchInfoAtMinute.events) {
-				var event = matchInfoAtMinute.events[eventIndex];
-				event.id = i;
-				if (isKill(event, data.summoner)) {
+	var eventId = 0;
+	for (var matchId in timelines) {
+		var matchTimeline = timelines[matchId];
+		var matchDetails = data.details[matchId];
+		var summonersToParticipantsMapping = getSummonersToParticipantsMapping(matchDetails);
+
+		for (var j in matchTimeline.frames) {
+			var frame = match[j];
+			for (var eventIndex in frame.events) {
+				var event = frame.events[eventIndex];
+				if (isKill(event, data.summoner, summonersToParticipantsMapping)) {
 					kills.push(event);
+					event.id = eventId;
+					eventId++;
 				} 
-				else if (isDeath(event, data.summoner)) {
+				else if (isDeath(event, data.summoner, summonersToParticipantsMapping)) {
 					deaths.push(event);
+					event.id = eventId;
+					eventId++;
 				}
-				else if (isAssist(event, data.summoner)){
+				else if (isAssist(event, data.summoner, summonersToParticipantsMapping)){
 					assists.push(event);
+					event.id = eventId;
+					eventId++;
 				}
 			}
 		}
 	}
-
 	return {kills, deaths, assists};
+}
+
+function getSummonersToParticipantsMapping(matchDetails){
+	var mapping = {};
+	for (var i in matchDetails.participatingIdentities) {
+		var participant = matchDetails.participatingIdentities[i];
+		mapping[participant.player.accountId] = participant.participantId;
+	}
+	return mapping;
 }
 
 function renderMapKda(kda) {
@@ -78,30 +95,32 @@ function renderMapKda(kda) {
 		.append('circle')
 		.attr('class', 'kills');
 
-	var circles = svg.selectAll('.kills')
-		.data(kda.kills, d => d.id)
+	var circles = svg.selectAll('.deaths')
+		.data(kda.deaths, d => d.id)
 		.enter()
 		.append('circle')
-		.attr('class', 'kills');
+		.attr('class', 'deaths');
 
-	var circles = svg.selectAll('.kills')
-		.data(kda.kills, d => d.id)
+	var circles = svg.selectAll('.assists')
+		.data(kda.assists, d => d.id)
 		.enter()
 		.append('circle')
-		.attr('class', 'kills');
-
+		.attr('class', 'assists');
 }
 
-function isKill(event, summonerInfo) {
-	return (event.killer === summonerInfo.accountId);
+function isKill(event, summonerInfo, summonerToParticipantsMapping) {
+	return (event.type === "CHAMPION_KILL" && 
+		event.killerId === summonerToParticipantsMapping[summonerInfo.accountId]);
 }
 
-function isDeath(event, summonerInfo) {
-	return (event.victim === summonerInfo.accountId);
+function isDeath(event, summonerInfo, summonerToParticipantsMapping) {
+	return (event.type === "CHAMPION_KILL" && 
+		event.victimId === summonerToParticipantsMapping[summonerInfo.accountId]);
 }
 
-function isAssist(event, summonerInfo) {
-	return (event.assists.contains(champion => champion === summonerInfo.accountId));
+function isAssist(event, summonerInfo, summonerToParticipantsMapping) {
+	return (event.type === "CHAMPION_KILL" && 
+		event.assistingParticipantIds.contains(id => id === summonerToParticipantsMapping[summonerInfo.accountId]));
 }
 
 function displayAnalysis(data) {
