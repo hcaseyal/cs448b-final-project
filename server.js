@@ -10,7 +10,7 @@ var fs = require('fs');
 
 const port = 8080; 
 var baseURL = 'https://na1.api.riotgames.com/lol/';
-var apiKey = 'RGAPI-94236ef3-39fa-4112-80d7-ea1a480207c9';
+var apiKey = 'RGAPI-5da90ab4-45a0-40d6-9121-c8d4b1731fb7';
 
 app.use(function (req, res, next) {
 	res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8000');
@@ -38,21 +38,26 @@ app.get('/matchlist', function (req, res) {
 app.listen(port, function () {
 	//TODO: remove prefetchData
 	//prefetchFavoritesMatchData();
-	prefetchMasterLeagueMatchListData();
+	//prefetchMasterLeagueMatchListData();
 	prefetchTimelinesData();
 	console.log(`Server running at http://localhost:${port}/`)
 });
 
 function onMatchlistFileContent(filename, content, requestContext, gameIdCache) {
 	var matches = JSON.parse(content);
+	var numSoFar = 0;
 	for (var i = 0; i < matches.length; i++) {
-		var gameId = matches[i].gameId;
+		let gameId = matches[i].gameId;
 
 		if (!gameIdCache[gameId]) {
 			// For each game that hasn't already been cached, 
 			// get the timeline and details from Riot and write it to a file
 			setTimeout(() => {
 				fetchAndWriteTimelineAndMatchDetails(gameId);
+				numSoFar++;
+				if (numSoFar % 10 === 0) {
+					console.log("Fetched " + numSoFar + " timelines and match details");
+				}
 			}, 3000 * requestContext.requestId);
 			requestContext.requestId++;
 			gameIdCache[gameId] = true;
@@ -67,7 +72,7 @@ function onError(err) {
 function prefetchTimelinesData() {
 	var requestContext = {requestId: 0};
 	var gameIdCache = {};
-	readFiles("./matchlist_data", function(filename, content) {
+	readFiles("./matchlist_data/", function(filename, content) {
 		onMatchlistFileContent(filename, content, requestContext, gameIdCache)
 	},
 	onError);
@@ -137,8 +142,8 @@ function fetchAndWriteMatchList(info, name, requestContext) {
 }
 
 function fetchAndWriteTimelineAndMatchDetails(gameId) {
-	var timelineUrl = `${baseURL}/lol/match/v3/timelines/by-match/${gameId}?api_key=${apiKey}`;
-	axios.get(timelineURl)
+	var timelineUrl = `${baseURL}match/v3/timelines/by-match/${gameId}?api_key=${apiKey}`;
+	axios.get(timelineUrl)
 		.then(response => {
 			fs.writeFile("timeline_data/timeline_" + gameId, JSON.stringify(response.data), function(err) {
 				if(err) {
@@ -150,9 +155,9 @@ function fetchAndWriteTimelineAndMatchDetails(gameId) {
 			});
 		});
 
-	var matchDetailsUrl = `${baseURL}/lol/match/v3/matches/${matchId}?api_key=${apiKey}`;
+	var matchDetailsUrl = `${baseURL}match/v3/matches/${gameId}?api_key=${apiKey}`;
 
-	axios.get(matchDetailsUrl);
+	axios.get(matchDetailsUrl)
 	.then(response => {
 		fs.writeFile("matchdetails_data/matchdetails_" + gameId, JSON.stringify(response.data), function(err) {
 			if(err) {

@@ -4,9 +4,13 @@
   "description": "To use: clone the repository npm install axios@0.16.2",
   "main": "server.js",
   "dependencies": {
+    "@blueprintjs/core": "^1.33.0",
     "axios": "^0.16.2",
     "express": "^4.16.2",
     "handlebars": "^4.0.11",
+    "react": "^16.1.1",
+    "react-addons-css-transition-group": "^15.6.2",
+    "react-dom": "^16.1.1",
     "request": "^2.81.0"
   },
   "devDependencies": {},
