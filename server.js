@@ -8,9 +8,9 @@ var express = require('express');
 var app = express();
 var fs = require('fs');
 
-const port = 8081; 
+const port = 8080; 
 var baseURL = 'https://na1.api.riotgames.com/lol/';
-var apiKey = 'RGAPI-5da90ab4-45a0-40d6-9121-c8d4b1731fb7';
+var apiKey = 'RGAPI-c6c662b5-b1ff-4412-86a7-5cdbeac7538f';
 
 app.use(function (req, res, next) {
 	res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8000');
@@ -39,7 +39,7 @@ app.listen(port, function () {
 	//TODO: remove prefetchData
 	//prefetchFavoritesMatchData();
 	//prefetchMasterLeagueMatchListData();
-	//prefetchTimelinesData();
+	prefetchTimelinesAndDetailsData();
 	console.log(`Server running at http://localhost:${port}/`)
 });
 
@@ -50,17 +50,24 @@ function onMatchlistFileContent(filename, content, requestContext, gameIdCache) 
 		let gameId = matches[i].gameId;
 
 		if (!gameIdCache[gameId]) {
-			// For each game that hasn't already been cached, 
-			// get the timeline and details from Riot and write it to a file
-			setTimeout(() => {
-				fetchAndWriteTimelineAndMatchDetails(gameId);
-				numSoFar++;
-				if (numSoFar % 10 === 0) {
-					console.log("Fetched " + numSoFar + " timelines and match details");
-				}
-			}, 3000 * requestContext.requestId);
-			requestContext.requestId++;
-			gameIdCache[gameId] = true;
+			if (fs.existsSync(timelineFilename(gameId)) 
+				|| fs.existsSync(matchDetailsFilename(gameId))) {
+				gameIdCache[gameId] = true;
+			}
+			else {
+				// For each game that hasn't already been cached, 
+				// get the timeline and details from Riot and write it to a file
+				setTimeout(() => {
+					fetchAndWriteTimelineAndMatchDetails(gameId);
+					numSoFar++;
+					if (numSoFar % 10 === 0) {
+						console.log("Fetched " + numSoFar + 
+							" timelines and match details for " + filename);
+					}
+				}, 2700 * requestContext.requestId);
+				requestContext.requestId++;
+				gameIdCache[gameId] = true;
+			}
 		}
 	}
 }
@@ -102,13 +109,13 @@ function readMatchDetailsFile(matchId, onFileContent, onError) {
 	readFile(filename, onFileContent, onError);
 }
 
-function prefetchTimelinesData() {
+function prefetchTimelinesAndDetailsData() {
 	var requestContext = {requestId: 0};
 	var gameIdCache = {};
 	readFiles("./matchlist_data/", function(filename, content) {
 		onMatchlistFileContent(filename, content, requestContext, gameIdCache)
 	},
-	onError);
+	(error) => console.log(error));
 }
 
 function readFiles(dirname, onFileContent, onError) {
@@ -177,12 +184,13 @@ function fetchAndWriteTimelineAndMatchDetails(gameId) {
 	var timelineUrl = `${baseURL}match/v3/timelines/by-match/${gameId}?api_key=${apiKey}`;
 	axios.get(timelineUrl)
 		.then(response => {
-			fs.writeFile(timelineFilename(gameId), JSON.stringify(response.data), function(err) {
+			let filename = timelineFilename(gameId);
+			fs.writeFile(filename, JSON.stringify(response.data), function(err) {
 				if(err) {
 					console.log(err);
 				}
 				else {
-					console.log("File saved");
+					console.log("File saved: " + filename);
 				}
 			});
 		});
@@ -191,12 +199,13 @@ function fetchAndWriteTimelineAndMatchDetails(gameId) {
 
 	axios.get(matchDetailsUrl)
 	.then(response => {
-		fs.writeFile(matchDetailsFilename(gameId), JSON.stringify(response.data), function(err) {
+		let filename = matchDetailsFilename(gameId);
+		fs.writeFile(filename, JSON.stringify(response.data), function(err) {
 			if(err) {
 				console.log(err);
 			}
 			else {
-				console.log("File saved");
+				console.log("File saved: " + filename);
 			}
 		});
 	});
@@ -332,6 +341,7 @@ function getAllMatchData(req, res, name) {
 
 function parseAllMatchesData(summonerInfo, data) {
 	var timelines = data.timelines;
+	var details = data.details;
 	var kills = [];
 	var deaths = [];
 	var assists = [];
@@ -339,7 +349,13 @@ function parseAllMatchesData(summonerInfo, data) {
 	var eventId = 0;
 	for (var matchId in timelines) {
 		var matchTimeline = timelines[matchId];
-		var matchDetails = data.details[matchId];
+		var matchDetails = details[matchId];
+
+		// Check for empty objects. Sometimes, match timelines or details are 
+		// not available from Riot for some reason.
+		if (!matchTimeline.frames || !matchDetails.participantIdentities) {
+			continue;
+		}
 		var summonersToParticipantsMapping = getSummonersToParticipantsMapping(matchDetails);
 
 		for (var j in matchTimeline.frames) {
