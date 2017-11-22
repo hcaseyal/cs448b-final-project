@@ -8,7 +8,7 @@ var express = require('express');
 var app = express();
 var fs = require('fs');
 
-const port = 8080; 
+const port = 8081; 
 var baseURL = 'https://na1.api.riotgames.com/lol/';
 var apiKey = 'RGAPI-5da90ab4-45a0-40d6-9121-c8d4b1731fb7';
 
@@ -30,7 +30,7 @@ app.get('/summoner', function (req, res) {
 	getSummonerInfo(req, res, name);
 });
 
-app.get('/allmatchdata', function (req, res) {
+app.get('/all-match-data', function (req, res) {
 	var id = req.param("name");
 	getAllMatchData(req, res, id);
 });
@@ -65,20 +65,41 @@ function onMatchlistFileContent(filename, content, requestContext, gameIdCache) 
 	}
 }
 
-function onError(err) {
-	console.log(err);
+function timelineFilename(matchId) {
+	return "timeline_data/timeline_" + matchId;
 }
 
-function readTimelineFile(matchId, onFileContent) {
-
+function matchListFilename(accountId, name) {
+	return "matchlist_data/matchlist_" + accountId + "_" + name;
 }
 
-function readMatchlistFile(accountId, name, onFileContent) {
-
+function matchDetailsFilename(matchId) {
+	return "matchdetails_data/matchdetails_" + matchId;
 }
 
-function readMatchDetailsFile(matchId, onFileContent) {
+function readFile(filename, onFileContent, onError) {
+	fs.readFile(filename, 'utf-8', (err, content) => {
+		if (err) {
+			onError(err);
+		} else {
+			onFileContent(filename, content);
+		}
+	});
+}
 
+function readTimelineFile(matchId, onFileContent, onError) {
+	let filename = timelineFilename(matchId);
+	readFile(filename, onFileContent, onError);
+}
+
+function readMatchlistFile(accountId, name, onFileContent, onError) {
+	let filename = matchListFilename(accountId, name);
+	readFile(filename, onFileContent, onError);
+}
+
+function readMatchDetailsFile(matchId, onFileContent, onError) {
+	let filename = matchDetailsFilename(matchId);
+	readFile(filename, onFileContent, onError);
 }
 
 function prefetchTimelinesData() {
@@ -117,17 +138,16 @@ function prefetchFavoritesMatchData() {
 }
 
 function prefetchMatchListData(summonerNames) {
-	console.log(summonerNames);
-		var requestContext = {requestId: 0};
-		for (let i = 0; i < summonerNames.length; i++) {
-			let name = summonerNames[i];
-			setTimeout(() => {
-				fetchSummonerInfo(name).then((info) => {
-					fetchAndWriteMatchList(info, name, requestContext);
-				});
-			}, 1500 * requestContext.requestId);
-			requestContext.requestId++;
-		}
+	var requestContext = {requestId: 0};
+	for (let i = 0; i < summonerNames.length; i++) {
+		let name = summonerNames[i];
+		setTimeout(() => {
+			fetchSummonerInfo(name).then((info) => {
+				fetchAndWriteMatchList(info, name, requestContext);
+			});
+		}, 1500 * requestContext.requestId);
+		requestContext.requestId++;
+	}
 }
 
 function fetchAndWriteMatchList(info, name, requestContext) {
@@ -142,7 +162,7 @@ function fetchAndWriteMatchList(info, name, requestContext) {
 	//matchlists is an array of the 100Matchlists
 	Promise.all(promises).then(matchLists => {
 		let matches = matchLists.reduce((prev, next) => prev.concat(next.matches), []);
-		fs.writeFile("matchlist_data/matchlist_" + info.accountId + "_" + name, JSON.stringify(matches), function(err) {
+		fs.writeFile(matchListFilename(info.accountId, name), JSON.stringify(matches), function(err) {
 			if(err) {
 				console.log(err);
 			}
@@ -157,7 +177,7 @@ function fetchAndWriteTimelineAndMatchDetails(gameId) {
 	var timelineUrl = `${baseURL}match/v3/timelines/by-match/${gameId}?api_key=${apiKey}`;
 	axios.get(timelineUrl)
 		.then(response => {
-			fs.writeFile("timeline_data/timeline_" + gameId, JSON.stringify(response.data), function(err) {
+			fs.writeFile(timelineFilename(gameId), JSON.stringify(response.data), function(err) {
 				if(err) {
 					console.log(err);
 				}
@@ -171,7 +191,7 @@ function fetchAndWriteTimelineAndMatchDetails(gameId) {
 
 	axios.get(matchDetailsUrl)
 	.then(response => {
-		fs.writeFile("matchdetails_data/matchdetails_" + gameId, JSON.stringify(response.data), function(err) {
+		fs.writeFile(matchDetailsFilename(gameId), JSON.stringify(response.data), function(err) {
 			if(err) {
 				console.log(err);
 			}
@@ -243,35 +263,54 @@ function getAllMatchData(req, res, name) {
 				readMatchlistFile(accountId, name, (filename, content) => {
 					retObj.matchlist = JSON.parse(content);
 					resolve(retObj.matchlist);
+				}, (error) => {
+					reject(error);
 				});
 			});
 		})
 		.then(matchlist => { // get match timelines
 			let promises = [];
+			let numComplete = 0;
 			for (let i in matchlist) {
 				let matchId = matchlist[i].gameId;
 				promises.push(new Promise((resolve, reject) => {
 					readTimelineFile(matchId, (filename, content) => {
+						numComplete++;
+						if (numComplete % 50 === 0) {
+							console.log("Read " + numComplete + " timeline files");
+						}
 						resolve(JSON.parse(content));
+					}, (error) => {
+						resolve({});
 					});
 				}));
 			}
 			return Promise.all(promises).then(timelines => { // Make map {matchId -> timeline}
 				let map = {};
 				for (let i = 0; i < timelines.length; i++) {
-					map[matchlist[i].gameId] = timeline[i];
+					map[matchlist[i].gameId] = timelines[i];
 				}
 				retObj.timelines = map;
 				return matchlist;
 			});
 		})
 		.then(matchlist => { // get match details
+			console.log("Starting to get match details");
 			let promises = [];
+			let numComplete = 0;
 			for (let i in matchlist) {
 				let matchId = matchlist[i].gameId;
 				promises.push(new Promise((resolve, reject) => {
 					readMatchDetailsFile(matchId, (filename, content) => {
+						numComplete++;
+						if (numComplete % 50 === 0) {
+							console.log("Read " + numComplete + " match details files");
+						}
 						resolve(JSON.parse(content));
+					}, (error) => {
+						console.log("Error getting match detail");
+						console.log(error);
+						resolve({});
 					});
 				}));
 			}
@@ -285,6 +324,8 @@ function getAllMatchData(req, res, name) {
 			});
 		})
 		.then(allMatchesData => {
-			return allMatchesData;
+			fs.writeFile("AllMatchesData", JSON.stringify(allMatchesData));
+			res.send(allMatchesData);
+			console.log("All matches data sent");
 		});
 }
