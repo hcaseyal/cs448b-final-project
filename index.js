@@ -57,52 +57,6 @@ function displaySummonerInfo(data) {
 	d3.select('.summoner-name-display').text(data.name);
 }
 
-function receiveKdaData(data) {
-	var timelines = data.timelines;
-	var kills = [];
-	var deaths = [];
-	var assists = [];
-
-	var eventId = 0;
-	for (var matchId in timelines) {
-		var matchTimeline = timelines[matchId];
-		var matchDetails = data.details[matchId];
-		var summonersToParticipantsMapping = getSummonersToParticipantsMapping(matchDetails);
-
-		for (var j in matchTimeline.frames) {
-			var frame = match[j];
-			for (var eventIndex in frame.events) {
-				var event = frame.events[eventIndex];
-				if (isKill(event, data.summoner, summonersToParticipantsMapping)) {
-					kills.push(event);
-					event.id = eventId;
-					eventId++;
-				} 
-				else if (isDeath(event, data.summoner, summonersToParticipantsMapping)) {
-					deaths.push(event);
-					event.id = eventId;
-					eventId++;
-				}
-				else if (isAssist(event, data.summoner, summonersToParticipantsMapping)){
-					assists.push(event);
-					event.id = eventId;
-					eventId++;
-				}
-			}
-		}
-	}
-	return {kills, deaths, assists};
-}
-
-function getSummonersToParticipantsMapping(matchDetails){
-	var mapping = {};
-	for (var i in matchDetails.participatingIdentities) {
-		var participant = matchDetails.participatingIdentities[i];
-		mapping[participant.player.accountId] = participant.participantId;
-	}
-	return mapping;
-}
-
 function renderMapKda(kda) {
 	var kills = svg.selectAll('.kills')
 		.data(kda.kills, d => d.id)
@@ -121,21 +75,6 @@ function renderMapKda(kda) {
 		.enter()
 		.append('circle')
 		.attr('class', 'assists');
-}
-
-function isKill(event, summonerInfo, summonerToParticipantsMapping) {
-	return (event.type === "CHAMPION_KILL" && 
-		event.killerId === summonerToParticipantsMapping[summonerInfo.accountId]);
-}
-
-function isDeath(event, summonerInfo, summonerToParticipantsMapping) {
-	return (event.type === "CHAMPION_KILL" && 
-		event.victimId === summonerToParticipantsMapping[summonerInfo.accountId]);
-}
-
-function isAssist(event, summonerInfo, summonerToParticipantsMapping) {
-	return (event.type === "CHAMPION_KILL" && 
-		event.assistingParticipantIds.contains(id => id === summonerToParticipantsMapping[summonerInfo.accountId]));
 }
 
 function displayAnalysis(data) {

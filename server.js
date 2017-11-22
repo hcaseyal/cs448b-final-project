@@ -325,7 +325,70 @@ function getAllMatchData(req, res, name) {
 		})
 		.then(allMatchesData => {
 			fs.writeFile("AllMatchesData", JSON.stringify(allMatchesData));
-			res.send(allMatchesData);
+			res.send(parseAllMatchesData(retObj.summoner, allMatchesData));
 			console.log("All matches data sent");
 		});
+}
+
+function parseAllMatchesData(summonerInfo, data) {
+	var timelines = data.timelines;
+	var kills = [];
+	var deaths = [];
+	var assists = [];
+
+	var eventId = 0;
+	for (var matchId in timelines) {
+		var matchTimeline = timelines[matchId];
+		var matchDetails = data.details[matchId];
+		var summonersToParticipantsMapping = getSummonersToParticipantsMapping(matchDetails);
+
+		for (var j in matchTimeline.frames) {
+			var frame = matchTimeline.frames[j];
+			for (var eventIndex in frame.events) {
+				var event = frame.events[eventIndex];
+				if (isKill(event, summonerInfo, summonersToParticipantsMapping)) {
+					kills.push(event);
+					event.id = eventId;
+					eventId++;
+				} 
+				else if (isDeath(event, summonerInfo, summonersToParticipantsMapping)) {
+					deaths.push(event);
+					event.id = eventId;
+					eventId++;
+				}
+				else if (isAssist(event, summonerInfo, summonersToParticipantsMapping)){
+					assists.push(event);
+					event.id = eventId;
+					eventId++;
+				}
+			}
+		}
+	}
+	return {kills, deaths, assists, summonersToParticipantsMapping};
+}
+
+function isKill(event, summonerInfo, summonerToParticipantsMapping) {
+	return (event.type === "CHAMPION_KILL" && 
+		event.killerId === summonerToParticipantsMapping[summonerInfo.accountId]);
+}
+
+function isDeath(event, summonerInfo, summonerToParticipantsMapping) {
+	return (event.type === "CHAMPION_KILL" && 
+		event.victimId === summonerToParticipantsMapping[summonerInfo.accountId]);
+}
+
+function isAssist(event, summonerInfo, summonerToParticipantsMapping) {
+	return (event.type === "CHAMPION_KILL" && 
+		event.assistingParticipantIds.includes(summonerToParticipantsMapping[summonerInfo.accountId]));
+}
+
+function getSummonersToParticipantsMapping(matchDetails){
+	var mapping = {};
+	var identities = matchDetails.participantIdentities;
+	for (var i in identities) {
+		var participant = identities[i];
+		mapping[participant.player.accountId] = participant.participantId;
+	}
+	console.log(mapping);
+	return mapping;
 }
