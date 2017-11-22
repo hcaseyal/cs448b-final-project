@@ -30,16 +30,16 @@ app.get('/summoner', function (req, res) {
 	getSummonerInfo(req, res, name);
 });
 
-app.get('/matchlist', function (req, res) {
-	var id = req.param("accountId");
-	getMatchlist(req, res, id);
+app.get('/allmatchdata', function (req, res) {
+	var id = req.param("name");
+	getAllMatchData(req, res, id);
 });
 
 app.listen(port, function () {
 	//TODO: remove prefetchData
 	//prefetchFavoritesMatchData();
 	//prefetchMasterLeagueMatchListData();
-	prefetchTimelinesData();
+	//prefetchTimelinesData();
 	console.log(`Server running at http://localhost:${port}/`)
 });
 
@@ -67,6 +67,18 @@ function onMatchlistFileContent(filename, content, requestContext, gameIdCache) 
 
 function onError(err) {
 	console.log(err);
+}
+
+function readTimelineFile(matchId, onFileContent) {
+
+}
+
+function readMatchlistFile(accountId, name, onFileContent) {
+
+}
+
+function readMatchDetailsFile(matchId, onFileContent) {
+
 }
 
 function prefetchTimelinesData() {
@@ -214,34 +226,65 @@ function fetchMatchlist(accountId, name, beginIndex, resolve) {
 }
 
 function getSummonerInfo(req, res, name) {
-	var url = encodeURI(`${baseURL}summoner/v3/summoners/by-name/${name}?api_key=${apiKey}`);
-	axios.get(url)
-	.then(response => {
-		res.send(response.data);
-	})
-	.catch(error => {
-		res.send(error);
-		console.log(error);
-	});
+	fetchSummonerInfo(name).then(data => res.send(data));
 }
 
-function getMatchlist(req, res, id) {
-	var url = `${baseURL}match/v3/matchlists/by-account/${id}?api_key=${apiKey}`;
-	
-	axios.get(url)
-	.then(response => {
-		fs.writeFile("matchlist_" + id, JSON.stringify(response.data), function(err) {
-			if(err) {
-				console.log(err);
+function getAllMatchData(req, res, name) {
+	var retObj = {};
+
+	fetchSummonerInfo(name)
+		.then(data => { // get summoner info
+			retObj.summoner = data; 
+			return data;
+		})
+		.then(summonerInfo => { // get matchlist
+			var accountId = summonerInfo.accountId;
+			return new Promise((resolve, reject) => {
+				readMatchlistFile(accountId, name, (filename, content) => {
+					retObj.matchlist = JSON.parse(content);
+					resolve(retObj.matchlist);
+				});
+			});
+		})
+		.then(matchlist => { // get match timelines
+			let promises = [];
+			for (let i in matchlist) {
+				let matchId = matchlist[i].gameId;
+				promises.push(new Promise((resolve, reject) => {
+					readTimelineFile(matchId, (filename, content) => {
+						resolve(JSON.parse(content));
+					});
+				}));
 			}
-			else {
-				console.log("File saved");
+			return Promise.all(promises).then(timelines => { // Make map {matchId -> timeline}
+				let map = {};
+				for (let i = 0; i < timelines.length; i++) {
+					map[matchlist[i].gameId] = timeline[i];
+				}
+				retObj.timelines = map;
+				return matchlist;
+			});
+		})
+		.then(matchlist => { // get match details
+			let promises = [];
+			for (let i in matchlist) {
+				let matchId = matchlist[i].gameId;
+				promises.push(new Promise((resolve, reject) => {
+					readMatchDetailsFile(matchId, (filename, content) => {
+						resolve(JSON.parse(content));
+					});
+				}));
 			}
+			return Promise.all(promises).then(details => { // Make map {matchId -> matchDetail}
+				let map = {};
+				for (let i = 0; i < details.length; i++) {
+					map[matchlist[i].gameId] = details[i];
+				}
+				retObj.details = map;
+				return retObj;
+			});
+		})
+		.then(allMatchesData => {
+			return allMatchesData;
 		});
-		res.send(response.data);
-	})
-	.catch(error => {
-		res.send(error);
-		console.log(error);
-	});
 }
