@@ -1,26 +1,25 @@
-var mapWidth = 750;
-var mapHeight = 750;
-var analysisArea = d3.select('.analysis-area');
-var visArea = d3.select('.vis-area');
+var mapWidth = 512,
+	mapHeight = 512,
+	bg = "img/map.png",
+    analysisArea = d3.select('.analysis-area');
+	visArea = d3.select('.vis-area');
 
 // Node server url
 var baseURL = "http://localhost:8081/";
 
-// Add an SVG element to the DOM
-var svg = d3.select('body').select('.vis-area')
-	.append('svg')
-  .attr('width', mapWidth)
-  .attr('height', mapHeight);
+var svg = d3.select("#map").append("svg:svg")
+	    .attr("width", mapWidth)
+	    .attr("height", mapHeight);
 
-// Add SVG map at correct size, assuming map is saved in a subdirectory called `data`
-svg.append('image')
-  .attr('width', mapWidth)
-  .attr('height', mapHeight)
-  .attr('xlink:href', 'img/map.png');
+	svg.append('image')
+	    .attr('xlink:href', bg)
+	    .attr('x', '0')
+	    .attr('y', '0')
+	    .attr('width', mapWidth)
+	    .attr('height', mapHeight);
 
 function searchSummoner() {
 	var summoner = d3.select('.summoner-name').node().value;
-	visArea.text(summoner);
 	searchForSummoner(summoner);
 	getAllMatchData(summoner);
 }
@@ -31,10 +30,8 @@ function getAllMatchData(summoner) {
 	xhttp.open("GET", url);
 	xhttp.onload = () => {
 		var data = JSON.parse(xhttp.responseText);
-		//renderMapKda(receiveKdaData(data));
+		renderMapKda(data);
 		//displayAnalysis(data);
-		console.log(xhttp.responseText);
-		analysisArea.text(xhttp.responseText);
 	}
 	xhttp.onerror = () => analysisArea.text("Couldn't retrieve match data. " + xhttp.statusText);
 	xhttp.send();
@@ -57,24 +54,55 @@ function displaySummonerInfo(data) {
 	d3.select('.summoner-name-display').text(data.name);
 }
 
-function renderMapKda(kda) {
+function renderMapKda(data) {
+	// Domain for the current Summoner's Rift on the in-game mini-map
+    let domain = {
+            min: {x: -120, y: -120},
+            max: {x: 14870, y: 14980}
+    },
+    xScale, yScale, color;
+
+	color = d3.scale.linear()
+	    .domain([0, 3])
+	    .range(["white", "steelblue"])
+	    .interpolate(d3.interpolateLab);
+
+	xScale = d3.scale.linear()
+	  .domain([domain.min.x, domain.max.x])
+	  .range([0, mapWidth]);
+
+	yScale = d3.scale.linear()
+	  .domain([domain.min.y, domain.max.y])
+	  .range([mapHeight, 0]);
+
 	var kills = svg.selectAll('.kills')
-		.data(kda.kills, d => d.id)
+		.data(data.kills, d => d.id)
 		.enter()
-		.append('circle')
+		.append('svg:circle')
+		.attr('cx', function(d) { return xScale(d.position.x) })
+        .attr('cy', function(d) { return yScale(d.position.y) })
+        .attr('r', 5)
 		.attr('class', 'kills');
 
 	var circles = svg.selectAll('.deaths')
-		.data(kda.deaths, d => d.id)
+		.data(data.deaths, d => d.id)
 		.enter()
-		.append('circle')
+		.append('svg:circle')
+		.attr('cx', function(d) { return xScale(d.position.x) })
+        .attr('cy', function(d) { return yScale(d.position.y) })
+        .attr('r', 5)
 		.attr('class', 'deaths');
 
 	var circles = svg.selectAll('.assists')
-		.data(kda.assists, d => d.id)
+		.data(data.assists, d => d.id)
 		.enter()
-		.append('circle')
+		.append('svg:circle')
+		.attr('cx', function(d) { return xScale(d.position.x) })
+        .attr('cy', function(d) { return yScale(d.position.y) })
+        .attr('r', 5)
 		.attr('class', 'assists');
+
+	console.log("Rendered map");
 }
 
 function displayAnalysis(data) {

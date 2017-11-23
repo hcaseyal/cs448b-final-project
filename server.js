@@ -2,15 +2,15 @@
 // https://na1.api.riotgames.com/lol/summoner/v3/summoners/by-name/RiotSchmick?api_key=RGAPI-0c3f4dea-5a44-40ce-b29d-88e00f218389
 // Requests the summoner object for RiotSchmick
 
-var http = require('http');
+let http = require('http');
 const axios = require('axios');
-var express = require('express');
-var app = express();
-var fs = require('fs');
+let express = require('express');
+let app = express();
+let fs = require('fs');
 
 const port = 8081; 
-var baseURL = 'https://na1.api.riotgames.com/lol/';
-var apiKey = 'RGAPI-9cbea39f-3dc0-426a-ac10-ba2c02eb2fdb';
+let baseURL = 'https://na1.api.riotgames.com/lol/';
+let apiKey = 'RGAPI-9cbea39f-3dc0-426a-ac10-ba2c02eb2fdb';
 
 app.use(function (req, res, next) {
 	res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8000');
@@ -26,12 +26,12 @@ app.use(function (req, res, next) {
 });
 
 app.get('/summoner', function (req, res) {
-	var name = req.param("name");
+	let name = req.param("name");
 	getSummonerInfo(req, res, name);
 });
 
 app.get('/all-match-data', function (req, res) {
-	var id = req.param("name");
+	let id = req.param("name");
 	getAllMatchData(req, res, id);
 });
 
@@ -44,9 +44,9 @@ app.listen(port, function () {
 });
 
 function onMatchlistFileContent(filename, content, requestContext, gameIdCache) {
-	var matches = JSON.parse(content);
-	var numSoFar = 0;
-	for (var i = 0; i < matches.length; i++) {
+	let matches = JSON.parse(content);
+	let numSoFar = 0;
+	for (let i = 0; i < matches.length; i++) {
 		let gameId = matches[i].gameId;
 
 		if (!gameIdCache[gameId]) {
@@ -110,8 +110,8 @@ function readMatchDetailsFile(matchId, onFileContent, onError) {
 }
 
 function prefetchTimelinesAndDetailsData() {
-	var requestContext = {requestId: 0};
-	var gameIdCache = {};
+	let requestContext = {requestId: 0};
+	let gameIdCache = {};
 	readFiles("./matchlist_data/", function(filename, content) {
 		onMatchlistFileContent(filename, content, requestContext, gameIdCache)
 	},
@@ -136,7 +136,7 @@ function readFiles(dirname, onFileContent, onError) {
   });
 }
 function prefetchFavoritesMatchData() {
-	var summonerList = 
+	let summonerList = 
 	["Trick2g", "Hikashikun", "Sirhcez", "Amrasarfeiniel", 
 	"FlowerKitten", "Reignover", "Meteos", "Voyboy", "Doublelift", "Bjergsen",
 	"Svenskeren", "HotGuySixPack", "Xmithie", "ILovePotatoChips", "xNaotox"];
@@ -145,7 +145,7 @@ function prefetchFavoritesMatchData() {
 }
 
 function prefetchMatchListData(summonerNames) {
-	var requestContext = {requestId: 0};
+	let requestContext = {requestId: 0};
 	for (let i = 0; i < summonerNames.length; i++) {
 		let name = summonerNames[i];
 		setTimeout(() => {
@@ -181,7 +181,7 @@ function fetchAndWriteMatchList(info, name, requestContext) {
 }
 
 function fetchAndWriteTimelineAndMatchDetails(gameId) {
-	var timelineUrl = `${baseURL}match/v3/timelines/by-match/${gameId}?api_key=${apiKey}`;
+	let timelineUrl = `${baseURL}match/v3/timelines/by-match/${gameId}?api_key=${apiKey}`;
 	axios.get(timelineUrl)
 		.then(response => {
 			let filename = timelineFilename(gameId);
@@ -195,7 +195,7 @@ function fetchAndWriteTimelineAndMatchDetails(gameId) {
 			});
 		});
 
-	var matchDetailsUrl = `${baseURL}match/v3/matches/${gameId}?api_key=${apiKey}`;
+	let matchDetailsUrl = `${baseURL}match/v3/matches/${gameId}?api_key=${apiKey}`;
 
 	axios.get(matchDetailsUrl)
 	.then(response => {
@@ -213,13 +213,13 @@ function fetchAndWriteTimelineAndMatchDetails(gameId) {
 
 function prefetchMasterLeagueMatchListData() {
 	fetchMasterLeague().then((master) => {
-		var names = master.entries.map(entry => entry.playerOrTeamName);
+		let names = master.entries.map(entry => entry.playerOrTeamName);
 		prefetchMatchListData(names);
 	});
 }
 
 function fetchMasterLeague() {
-	var url = `${baseURL}league/v3/masterleagues/by-queue/RANKED_SOLO_5x5?api_key=${apiKey}`;
+	let url = `${baseURL}league/v3/masterleagues/by-queue/RANKED_SOLO_5x5?api_key=${apiKey}`;
 	return axios.get(url)
 		.then(response => {
 			return response.data;
@@ -231,7 +231,7 @@ function fetchMasterLeague() {
 
 function fetchSummonerInfo(name) {
 	console.log("Fetching summoner info for " + name);
-	var url = encodeURI(`${baseURL}summoner/v3/summoners/by-name/${name}?api_key=${apiKey}`);
+	let url = encodeURI(`${baseURL}summoner/v3/summoners/by-name/${name}?api_key=${apiKey}`);
 	return axios.get(url)
 	.then(response => {
 		return response.data;
@@ -243,7 +243,7 @@ function fetchSummonerInfo(name) {
 
 function fetchMatchlist(accountId, name, beginIndex, resolve) {
 	console.log("Fetching match list for " + name);
-	var url = `${baseURL}match/v3/matchlists/by-account/${accountId}?api_key=${apiKey}&beginIndex=${beginIndex}`;
+	let url = `${baseURL}match/v3/matchlists/by-account/${accountId}?api_key=${apiKey}&beginIndex=${beginIndex}`;
 	
 	axios.get(url)
 	.then(response => {
@@ -259,7 +259,7 @@ function getSummonerInfo(req, res, name) {
 }
 
 function getAllMatchData(req, res, name) {
-	var retObj = {};
+	let retObj = {};
 
 	fetchSummonerInfo(name)
 		.then(data => { // get summoner info
@@ -267,7 +267,7 @@ function getAllMatchData(req, res, name) {
 			return data;
 		})
 		.then(summonerInfo => { // get matchlist
-			var accountId = summonerInfo.accountId;
+			let accountId = summonerInfo.accountId;
 			return new Promise((resolve, reject) => {
 				readMatchlistFile(accountId, name, (filename, content) => {
 					retObj.matchlist = JSON.parse(content);
@@ -340,18 +340,18 @@ function getAllMatchData(req, res, name) {
 }
 
 function parseAllMatchesData(summonerInfo, data) {
-	var timelines = data.timelines;
-	var details = data.details;
-	var kills = [];
-	var deaths = [];
-	var assists = [];
-	var matchDetailsPerGame = {};
+	let timelines = data.timelines;
+	let details = data.details;
+	let kills = [];
+	let deaths = [];
+	let assists = [];
+	let matchDetailsPerGame = {};
 
-	var eventId = 0;
-	for (var matchId in timelines) {
-		var matchTimeline = timelines[matchId];
-		var matchDetails = details[matchId];
-		var matchDetailsToSend = {};
+	let eventId = 0;
+	for (let matchId in timelines) {
+		let matchTimeline = timelines[matchId];
+		let matchDetails = details[matchId];
+		let matchDetailsToSend = {};
 
 		// Check for empty objects. Sometimes, match timelines or details are 
 		// not available from Riot for some reason.
@@ -360,14 +360,14 @@ function parseAllMatchesData(summonerInfo, data) {
 			!isRecentSeason(matchDetails.seasonId)) {
 			continue;
 		}
-		var summonersToParticipants = getSummonersToParticipantsMapping(matchDetails);
-		var participantId = summonersToParticipants[summonerInfo.accountId];
+		let summonersToParticipants = getSummonersToParticipantsMapping(matchDetails);
+		let participantId = summonersToParticipants[summonerInfo.accountId];
 
 		// Compile kills, deaths, and assists
-		for (var j in matchTimeline.frames) {
-			var frame = matchTimeline.frames[j];
-			for (var eventIndex in frame.events) {
-				var event = frame.events[eventIndex];
+		for (let j in matchTimeline.frames) {
+			let frame = matchTimeline.frames[j];
+			for (let eventIndex in frame.events) {
+				let event = frame.events[eventIndex];
 
 				// Attach event metadata
 				event.id = eventId;
@@ -405,8 +405,8 @@ function isRedSide(participantId) {
 }
 
 function isWin(matchDetails, participantId) {
-	for (var i in matchDetails.participants) {
-		var participant = matchDetails.participants[i];
+	for (let i in matchDetails.participants) {
+		let participant = matchDetails.participants[i];
 		if (participant.participantId === participantId) {
 			return participant.stats.win;
 		}
@@ -431,12 +431,11 @@ function isAssist(event, participantId) {
 }
 
 function getSummonersToParticipantsMapping(matchDetails){
-	var mapping = {};
-	var identities = matchDetails.participantIdentities;
-	for (var i in identities) {
-		var participant = identities[i];
+	let mapping = {};
+	let identities = matchDetails.participantIdentities;
+	for (let i in identities) {
+		let participant = identities[i];
 		mapping[participant.player.accountId] = participant.participantId;
 	}
-	console.log(mapping);
 	return mapping;
 }
