@@ -12,6 +12,18 @@ const port = 8081;
 let baseURL = 'https://na1.api.riotgames.com/lol/';
 let apiKey = 'RGAPI-9cbea39f-3dc0-426a-ac10-ba2c02eb2fdb';
 
+const queues = {2: "5v5 Blind Pick", 
+				4: "5v5 Ranked Solo",
+				6: "5v5 Ranked Premade",
+				14: "5v5 Draft Pick",
+				42: "5v5 Ranked Team",
+				61: "5v5 Team Builder",
+				400: "5v5 Draft Pick",
+				410: "5v5 Ranked Dynamic",
+				420: "5v5 Ranked Solo",
+				430: "5v5 Blind Pick",
+				440: "5v5 Ranked Flex"};
+
 app.use(function (req, res, next) {
 	res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8000');
 
@@ -357,7 +369,8 @@ function parseAllMatchesData(summonerInfo, data) {
 		// not available from Riot for some reason.
 		if (!matchTimeline.frames || 
 			!matchDetails.participantIdentities ||
-			!isRecentSeason(matchDetails.seasonId)) {
+			!isRecentSeason(matchDetails.seasonId) ||
+			!isClassicSummonersRift(matchDetails.queueId)) {
 			continue;
 		}
 		let summonersToParticipants = getSummonersToParticipantsMapping(matchDetails);
@@ -392,6 +405,11 @@ function parseAllMatchesData(summonerInfo, data) {
 		matchDetailsPerGame[matchId] = matchDetailsToSend;
 	}
 	return {kills, deaths, assists, matchDetailsPerGame};
+}
+
+function isClassicSummonersRift(queueId) {
+	let id = parseInt(queueId);
+	return id in queues;
 }
 
 // Seasons 4 and earlier use a different Summoner's Rift map
