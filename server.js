@@ -8,9 +8,9 @@ var express = require('express');
 var app = express();
 var fs = require('fs');
 
-const port = 8080; 
+const port = 8081; 
 var baseURL = 'https://na1.api.riotgames.com/lol/';
-var apiKey = 'RGAPI-c6c662b5-b1ff-4412-86a7-5cdbeac7538f';
+var apiKey = 'RGAPI-9cbea39f-3dc0-426a-ac10-ba2c02eb2fdb';
 
 app.use(function (req, res, next) {
 	res.setHeader('Access-Control-Allow-Origin', 'http://localhost:8000');
@@ -39,7 +39,7 @@ app.listen(port, function () {
 	//TODO: remove prefetchData
 	//prefetchFavoritesMatchData();
 	//prefetchMasterLeagueMatchListData();
-	prefetchTimelinesAndDetailsData();
+	//prefetchTimelinesAndDetailsData();
 	console.log(`Server running at http://localhost:${port}/`)
 });
 
@@ -345,57 +345,89 @@ function parseAllMatchesData(summonerInfo, data) {
 	var kills = [];
 	var deaths = [];
 	var assists = [];
+	var matchDetailsPerGame = {};
 
 	var eventId = 0;
 	for (var matchId in timelines) {
 		var matchTimeline = timelines[matchId];
 		var matchDetails = details[matchId];
+		var matchDetailsToSend = {};
 
 		// Check for empty objects. Sometimes, match timelines or details are 
 		// not available from Riot for some reason.
-		if (!matchTimeline.frames || !matchDetails.participantIdentities) {
+		if (!matchTimeline.frames || 
+			!matchDetails.participantIdentities ||
+			!isRecentSeason(matchDetails.seasonId)) {
 			continue;
 		}
-		var summonersToParticipantsMapping = getSummonersToParticipantsMapping(matchDetails);
+		var summonersToParticipants = getSummonersToParticipantsMapping(matchDetails);
+		var participantId = summonersToParticipants[summonerInfo.accountId];
 
+		// Compile kills, deaths, and assists
 		for (var j in matchTimeline.frames) {
 			var frame = matchTimeline.frames[j];
 			for (var eventIndex in frame.events) {
 				var event = frame.events[eventIndex];
-				if (isKill(event, summonerInfo, summonersToParticipantsMapping)) {
+
+				// Attach event metadata
+				event.id = eventId;
+				eventId++;
+				event.matchId = matchId;
+
+				if (isKill(event, participantId)) {
 					kills.push(event);
-					event.id = eventId;
-					eventId++;
 				} 
-				else if (isDeath(event, summonerInfo, summonersToParticipantsMapping)) {
+				else if (isDeath(event, participantId)) {
 					deaths.push(event);
-					event.id = eventId;
-					eventId++;
 				}
-				else if (isAssist(event, summonerInfo, summonersToParticipantsMapping)){
+				else if (isAssist(event, participantId)){
 					assists.push(event);
-					event.id = eventId;
-					eventId++;
 				}
 			}
 		}
+		matchDetailsToSend.win = isWin(matchDetails, participantId);
+		matchDetailsToSend.participants = summonersToParticipants;
+		matchDetailsToSend.myParticipantId = participantId;
+		matchDetailsToSend.isRed = isRedSide(participantId);
+		matchDetailsPerGame[matchId] = matchDetailsToSend;
 	}
-	return {kills, deaths, assists, summonersToParticipantsMapping};
+	return {kills, deaths, assists, matchDetailsPerGame};
 }
 
-function isKill(event, summonerInfo, summonerToParticipantsMapping) {
-	return (event.type === "CHAMPION_KILL" && 
-		event.killerId === summonerToParticipantsMapping[summonerInfo.accountId]);
+// Seasons 4 and earlier use a different Summoner's Rift map
+function isRecentSeason(seasonId) {
+	return parseInt(seasonId) > 4;
 }
 
-function isDeath(event, summonerInfo, summonerToParticipantsMapping) {
-	return (event.type === "CHAMPION_KILL" && 
-		event.victimId === summonerToParticipantsMapping[summonerInfo.accountId]);
+// If not red side, then player was on blue side
+function isRedSide(participantId) {
+	return parseInt(participantId) > 5;
 }
 
-function isAssist(event, summonerInfo, summonerToParticipantsMapping) {
+function isWin(matchDetails, participantId) {
+	for (var i in matchDetails.participants) {
+		var participant = matchDetails.participants[i];
+		if (participant.participantId === participantId) {
+			return participant.stats.win;
+		}
+	}
+	console.log("ERROR! Can't find participant in the matchDetails in isWin!");
+	return false;
+}
+
+function isKill(event, participantId) {
 	return (event.type === "CHAMPION_KILL" && 
-		event.assistingParticipantIds.includes(summonerToParticipantsMapping[summonerInfo.accountId]));
+		event.killerId === participantId);
+}
+
+function isDeath(event, participantId) {
+	return (event.type === "CHAMPION_KILL" && 
+		event.victimId === participantId);
+}
+
+function isAssist(event, participantId) {
+	return (event.type === "CHAMPION_KILL" && 
+		event.assistingParticipantIds.includes(participantId));
 }
 
 function getSummonersToParticipantsMapping(matchDetails){
