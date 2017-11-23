@@ -4,6 +4,10 @@ var mapWidth = 512,
     analysisArea = d3.select('.analysis-area');
 	visArea = d3.select('.vis-area');
 
+var matchDetailsPerGame;
+var matchesData;
+var championData;
+
 // Node server url
 var baseURL = "http://localhost:8081/";
 
@@ -18,6 +22,8 @@ var svg = d3.select("#map").append("svg:svg")
 	    .attr('width', mapWidth)
 	    .attr('height', mapHeight);
 
+loadStaticData();
+
 function searchSummoner() {
 	var summoner = d3.select('.summoner-name').node().value;
 	searchForSummoner(summoner);
@@ -29,8 +35,10 @@ function getAllMatchData(summoner) {
 	var url = `${baseURL}all-match-data/?name=${summoner}`;
 	xhttp.open("GET", url);
 	xhttp.onload = () => {
-		var data = JSON.parse(xhttp.responseText);
-		renderMapKda(data);
+		dataset = JSON.parse(xhttp.responseText);
+		matchDetailsPerGame = data.matchDetailsPerGame;
+		renderMapKda();
+		drawChampionSelectFilter();
 		//displayAnalysis(data);
 	}
 	xhttp.onerror = () => analysisArea.text("Couldn't retrieve match data. " + xhttp.statusText);
@@ -54,7 +62,45 @@ function displaySummonerInfo(data) {
 	d3.select('.summoner-name-display').text(data.name);
 }
 
-function renderMapKda(data) {
+function loadStaticData() {
+	d3.json('champions.txt', function(error, data) {
+		if (error) {
+			return console.warn(error);
+		}
+		championData = data.data;
+
+		drawChampionSelectFilter();
+	});
+}
+
+function drawChampionSelectFilter() {
+	var select = d3.select('.championSelect')
+	.on('change', updateMap);
+
+	var championArray = [];				
+	Object.keys(championData).forEach(function(k){
+		championArray.push(championData[k]);
+	});
+
+	var sortedData = championArray.sort(function(x, y) {
+		return d3.ascending(x.name, y.name);
+	});
+
+	sortedData.unshift({name: "All champions", id: 0});
+	var options = select
+		.selectAll('option')
+		.data(d3.map(sortedData, d => d.name).keys())
+		.enter()
+		.append('option')
+		.text(d => d)
+		.attr('value', d => d);
+}
+
+function updateMap() {
+
+}
+
+function renderMapKda() {
 	// Domain for the current Summoner's Rift on the in-game mini-map
     let domain = {
             min: {x: -120, y: -120},
@@ -105,6 +151,5 @@ function renderMapKda(data) {
 	console.log("Rendered map");
 }
 
-function displayAnalysis(data) {
-
+function displayAnalysis() {
 }

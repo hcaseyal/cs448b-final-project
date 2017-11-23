@@ -10,7 +10,7 @@ let fs = require('fs');
 
 const port = 8081; 
 let baseURL = 'https://na1.api.riotgames.com/lol/';
-let apiKey = 'RGAPI-9cbea39f-3dc0-426a-ac10-ba2c02eb2fdb';
+let apiKey = 'RGAPI-37751fb9-eee8-490c-808a-a352d51a02b4';
 
 const queues = {2: "5v5 Blind Pick", 
 				4: "5v5 Ranked Solo",
@@ -402,9 +402,27 @@ function parseAllMatchesData(summonerInfo, data) {
 		matchDetailsToSend.participants = summonersToParticipants;
 		matchDetailsToSend.myParticipantId = participantId;
 		matchDetailsToSend.isRed = isRedSide(participantId);
+		matchDetailsToSend.participantDetails = 
+			getParticipantDetails(matchDetails, matchDetailsToSend.isRed);
 		matchDetailsPerGame[matchId] = matchDetailsToSend;
 	}
 	return {kills, deaths, assists, matchDetailsPerGame};
+}
+
+function getParticipantDetails(matchDetails, isRedTeam) {
+	let allDetails = {};
+	for (let i in matchDetails.participants) {
+		let participant = matchDetails.participants[i];
+		let details = {};
+
+		details.role = participant.timeline.role;
+		details.lane = participant.timeline.lane;
+		details.teamId = 
+			(isRedTeam === isRedSide(participant.participantId));
+		details.championId = participant.championId;
+		allDetails[participant.participantId] = details;
+	}
+	return allDetails;
 }
 
 function isClassicSummonersRift(queueId) {
@@ -448,7 +466,7 @@ function isAssist(event, participantId) {
 		event.assistingParticipantIds.includes(participantId));
 }
 
-function getSummonersToParticipantsMapping(matchDetails){
+function getSummonersToParticipantsMapping(matchDetails) {
 	let mapping = {};
 	let identities = matchDetails.participantIdentities;
 	for (let i in identities) {
