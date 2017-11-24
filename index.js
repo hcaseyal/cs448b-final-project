@@ -8,7 +8,7 @@ var matchDetailsPerGame;
 var matchesData;
 var championData;
 
-var filterStates = {};
+var filterStates = {"side": "both"};
 
 // Domain for the current Summoner's Rift on the in-game mini-map
 var domain = {
@@ -142,19 +142,34 @@ function redrawSliderText(values) {
 	filterStates["timeSlider"] = valuesInMs;
 }
 
+function blueSideSelected() {
+	filterStates["side"] = "blue";
+	updateMap();
+}
+
+function redSideSelected() {
+	filterStates["side"] = "red";
+	updateMap();
+}
+
+function bothSidesSelected() {
+	filterStates["side"] = "both";
+	updateMap();
+}
+
 function updateMap() {
 	if (!matchesData) {
 		return;
 	}
 
 	let filteredKills = matchesData.kills.filter(d => filterByChampionPlayed(d) 
-		&& filterByTime(d));
+		&& filterByTime(d) && filterBySide(d));
 
 	let filteredDeaths = matchesData.deaths.filter(d => filterByChampionPlayed(d)
-		&& filterByTime(d));
+		&& filterByTime(d) && filterBySide(d));
 
 	let filteredAssists = matchesData.assists.filter(d => filterByChampionPlayed(d)
-		&& filterByTime(d));
+		&& filterByTime(d) && filterBySide(d));
 
 	let updatedKills = svg.selectAll('.kills').data(filteredKills, d => d.id);	
 
@@ -175,6 +190,13 @@ function renderDataPoints(data, className) {
         .attr('cy', function(d) { return yScale(d.position.y) })
         .attr('r', 5)
 		.attr('class', className);
+}
+
+function filterBySide(datum) {
+	let isRed = matchDetailsPerGame[datum.matchId].isRed;
+	return filterStates["side"] === "both" || 
+		(filterStates["side"] === "red" && isRed) || 
+		(filterStates["side"] === "blue" && !isRed);
 }
 
 function filterByTime(datum) {

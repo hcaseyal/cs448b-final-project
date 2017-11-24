@@ -437,7 +437,7 @@ function isRecentSeason(seasonId) {
 
 // If not red side, then player was on blue side
 function isRedSide(participantId) {
-	return parseInt(participantId) > 5;
+	return (parseInt(participantId) > 5);
 }
 
 function isWin(matchDetails, participantId) {
