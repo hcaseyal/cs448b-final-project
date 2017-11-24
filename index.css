@@ -6,6 +6,10 @@
 	
 }
 
+.timeSliderWrapper {
+	width: 500px;
+}
+
 .kills {
 	fill: blue;
 }

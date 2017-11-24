@@ -43,6 +43,7 @@ var svg = d3.select("#map").append("svg:svg")
 	    .attr('height', mapHeight);
 
 loadStaticData();
+drawTimeFilter();
 
 function searchSummoner() {
 	var summoner = d3.select('.summoner-name').node().value;
@@ -116,7 +117,31 @@ function drawChampionSelectFilter() {
 		.attr('value', d => d.key)
 }
 
+function drawTimeFilter() {
+	$(".timeSlider" ).slider({
+	  range: true,
+	  max: 60,
+	  min: 0,
+	  values: [ 0, 60 ],
+	  slide: onSliderChange
+	});
+	redrawSliderText([0, 60]);
+}
+
+function onSliderChange(event, ui) {
+	var values = ui.values;
+	redrawSliderText(values);
+	updateMap();
+}
+
+function redrawSliderText(values) {
+	d3.select(".timeSliderText").text(values[0] + " - " + values[1] + " minutes");
+}
+
 function updateMap() {
+	if (!matchesData) {
+		return;
+	}
 	let filteredKills = matchesData.kills.filter(d => filterByChampionPlayed(d));
 	let filteredDeaths = matchesData.deaths.filter(d => filterByChampionPlayed(d));
 	let filteredAssists = matchesData.assists.filter(d => filterByChampionPlayed(d));
@@ -141,6 +166,10 @@ function renderDataPoints(data, className) {
         .attr('cy', function(d) { return yScale(d.position.y) })
         .attr('r', 5)
 		.attr('class', className);
+}
+
+function filterByTime() {
+
 }
 
 function filterByChampionPlayed(datum) {
