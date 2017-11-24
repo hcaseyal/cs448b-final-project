@@ -8,6 +8,8 @@ var matchDetailsPerGame;
 var matchesData;
 var championData;
 
+var filterStates = {};
+
 // Domain for the current Summoner's Rift on the in-game mini-map
 var domain = {
         min: {x: -120, y: -120},
@@ -136,18 +138,25 @@ function onSliderChange(event, ui) {
 
 function redrawSliderText(values) {
 	d3.select(".timeSliderText").text(values[0] + " - " + values[1] + " minutes");
+	let valuesInMs = [values[0] * 60 * 1000, values[1] * 60 * 1000];
+	filterStates["timeSlider"] = valuesInMs;
 }
 
 function updateMap() {
 	if (!matchesData) {
 		return;
 	}
-	let filteredKills = matchesData.kills.filter(d => filterByChampionPlayed(d));
-	let filteredDeaths = matchesData.deaths.filter(d => filterByChampionPlayed(d));
-	let filteredAssists = matchesData.assists.filter(d => filterByChampionPlayed(d));
+
+	let filteredKills = matchesData.kills.filter(d => filterByChampionPlayed(d) 
+		&& filterByTime(d));
+
+	let filteredDeaths = matchesData.deaths.filter(d => filterByChampionPlayed(d)
+		&& filterByTime(d));
+
+	let filteredAssists = matchesData.assists.filter(d => filterByChampionPlayed(d)
+		&& filterByTime(d));
 
 	let updatedKills = svg.selectAll('.kills').data(filteredKills, d => d.id);	
-
 
 	let updatedDeaths = svg.selectAll('.deaths').data(filteredDeaths, d => d.id);	
 
@@ -168,8 +177,10 @@ function renderDataPoints(data, className) {
 		.attr('class', className);
 }
 
-function filterByTime() {
-
+function filterByTime(datum) {
+	let min = filterStates["timeSlider"][0];
+	let max = filterStates["timeSlider"][1];
+	return (datum.timestamp >= min && datum.timestamp <= max);
 }
 
 function filterByChampionPlayed(datum) {
