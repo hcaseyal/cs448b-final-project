@@ -58,7 +58,7 @@ function getAllMatchData(summoner) {
 		matchesData = JSON.parse(xhttp.responseText);
 		matchDetailsPerGame = matchesData.matchDetailsPerGame;
 		renderMapKda();
-		drawChampionSelectFilter();
+		updateMap();
 		//displayAnalysis(data);
 	}
 	xhttp.onerror = () => analysisArea.text("Couldn't retrieve match data. " + xhttp.statusText);
