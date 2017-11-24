@@ -8,6 +8,26 @@ var matchDetailsPerGame;
 var matchesData;
 var championData;
 
+// Domain for the current Summoner's Rift on the in-game mini-map
+var domain = {
+        min: {x: -120, y: -120},
+        max: {x: 14870, y: 14980}
+},
+xScale, yScale, color;
+
+color = d3.scale.linear()
+    .domain([0, 3])
+    .range(["white", "steelblue"])
+    .interpolate(d3.interpolateLab);
+
+xScale = d3.scale.linear()
+  .domain([domain.min.x, domain.max.x])
+  .range([0, mapWidth]);
+
+yScale = d3.scale.linear()
+  .domain([domain.min.y, domain.max.y])
+  .range([mapHeight, 0]);
+
 // Node server url
 var baseURL = "http://localhost:8081/";
 
@@ -35,8 +55,8 @@ function getAllMatchData(summoner) {
 	var url = `${baseURL}all-match-data/?name=${summoner}`;
 	xhttp.open("GET", url);
 	xhttp.onload = () => {
-		dataset = JSON.parse(xhttp.responseText);
-		matchDetailsPerGame = data.matchDetailsPerGame;
+		matchesData = JSON.parse(xhttp.responseText);
+		matchDetailsPerGame = matchesData.matchDetailsPerGame;
 		renderMapKda();
 		drawChampionSelectFilter();
 		//displayAnalysis(data);
@@ -89,64 +109,59 @@ function drawChampionSelectFilter() {
 	sortedData.unshift({name: "All champions", id: 0});
 	var options = select
 		.selectAll('option')
-		.data(d3.map(sortedData, d => d.name).keys())
+		.data(sortedData)
 		.enter()
 		.append('option')
-		.text(d => d)
-		.attr('value', d => d);
+		.text(d => d.name)
+		.attr('value', d => d.key)
 }
 
 function updateMap() {
+	let filteredKills = matchesData.kills.filter(d => filterByChampionPlayed(d));
+	let filteredDeaths = matchesData.deaths.filter(d => filterByChampionPlayed(d));
+	let filteredAssists = matchesData.assists.filter(d => filterByChampionPlayed(d));
 
+	let updatedKills = svg.selectAll('.kills').data(filteredKills, d => d.id);	
+
+
+	let updatedDeaths = svg.selectAll('.deaths').data(filteredDeaths, d => d.id);	
+
+	let updatedAssists = svg.selectAll('.assists').data(filteredAssists, d => d.id);	
+
+	renderDataPoints(updatedKills, 'kills');
+	renderDataPoints(updatedDeaths, 'deaths');
+	renderDataPoints(updatedAssists, 'assists');
+}
+
+function renderDataPoints(data, className) {
+	data.exit().remove();
+	data.enter()
+		.append('svg:circle')
+		.attr('cx', function(d) { return xScale(d.position.x) })
+        .attr('cy', function(d) { return yScale(d.position.y) })
+        .attr('r', 5)
+		.attr('class', className);
+}
+
+function filterByChampionPlayed(datum) {
+	let championSelected = d3.select('.championSelect').node().value;
+	let details = matchDetailsPerGame[datum.matchId];
+	return (championSelected === "All champions" || 
+		championData[championSelected].id === details.participantDetails[details.myParticipantId].championId);
 }
 
 function renderMapKda() {
-	// Domain for the current Summoner's Rift on the in-game mini-map
-    let domain = {
-            min: {x: -120, y: -120},
-            max: {x: 14870, y: 14980}
-    },
-    xScale, yScale, color;
+	let kills = svg.selectAll('.kills')
+		.data(matchesData.kills, d => d.id);
+	renderDataPoints(kills, 'kills');
 
-	color = d3.scale.linear()
-	    .domain([0, 3])
-	    .range(["white", "steelblue"])
-	    .interpolate(d3.interpolateLab);
+	let deaths = svg.selectAll('.deaths')
+		.data(matchesData.deaths, d => d.id);
+	renderDataPoints(deaths, 'deaths');
 
-	xScale = d3.scale.linear()
-	  .domain([domain.min.x, domain.max.x])
-	  .range([0, mapWidth]);
-
-	yScale = d3.scale.linear()
-	  .domain([domain.min.y, domain.max.y])
-	  .range([mapHeight, 0]);
-
-	var kills = svg.selectAll('.kills')
-		.data(data.kills, d => d.id)
-		.enter()
-		.append('svg:circle')
-		.attr('cx', function(d) { return xScale(d.position.x) })
-        .attr('cy', function(d) { return yScale(d.position.y) })
-        .attr('r', 5)
-		.attr('class', 'kills');
-
-	var circles = svg.selectAll('.deaths')
-		.data(data.deaths, d => d.id)
-		.enter()
-		.append('svg:circle')
-		.attr('cx', function(d) { return xScale(d.position.x) })
-        .attr('cy', function(d) { return yScale(d.position.y) })
-        .attr('r', 5)
-		.attr('class', 'deaths');
-
-	var circles = svg.selectAll('.assists')
-		.data(data.assists, d => d.id)
-		.enter()
-		.append('svg:circle')
-		.attr('cx', function(d) { return xScale(d.position.x) })
-        .attr('cy', function(d) { return yScale(d.position.y) })
-        .attr('r', 5)
-		.attr('class', 'assists');
+	let assists = svg.selectAll('.assists')
+		.data(matchesData.assists, d => d.id);
+	renderDataPoints(assists, 'assists');
 
 	console.log("Rendered map");
 }

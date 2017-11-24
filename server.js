@@ -8,7 +8,7 @@ let express = require('express');
 let app = express();
 let fs = require('fs');
 
-const port = 8081; 
+const port = 8080; 
 let baseURL = 'https://na1.api.riotgames.com/lol/';
 let apiKey = 'RGAPI-37751fb9-eee8-490c-808a-a352d51a02b4';
 
@@ -51,7 +51,7 @@ app.listen(port, function () {
 	//TODO: remove prefetchData
 	//prefetchFavoritesMatchData();
 	//prefetchMasterLeagueMatchListData();
-	//prefetchTimelinesAndDetailsData();
+	prefetchTimelinesAndDetailsData();
 	console.log(`Server running at http://localhost:${port}/`)
 });
 
@@ -417,7 +417,7 @@ function getParticipantDetails(matchDetails, isRedTeam) {
 
 		details.role = participant.timeline.role;
 		details.lane = participant.timeline.lane;
-		details.teamId = 
+		details.isAlly = 
 			(isRedTeam === isRedSide(participant.participantId));
 		details.championId = participant.championId;
 		allDetails[participant.participantId] = details;
