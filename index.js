@@ -92,12 +92,12 @@ function loadStaticData() {
 		}
 		championData = data.data;
 
-		drawChampionSelectFilter();
+		drawRoleAndChampionFilters('.championSelect-self', '.roleSelect-self');
 	});
 }
 
-function drawChampionSelectFilter() {
-	var select = d3.select('.championSelect')
+function drawChampionSelectFilter(componentName) {
+	var select = d3.select(componentName)
 	.on('change', updateMap);
 
 	var championArray = [];				
@@ -117,6 +117,25 @@ function drawChampionSelectFilter() {
 		.append('option')
 		.text(d => d.name)
 		.attr('value', d => d.key)
+}
+
+function drawRoleSelectFilter(componentName) {
+	var select = d3.select(componentName)
+	.on('change', updateMap);
+
+	var roleArray = ["All roles", "Top", "Jungle", "Mid", "ADC", "Support"];				
+	var options = select
+		.selectAll('option')
+		.data(roleArray)
+		.enter()
+		.append('option')
+		.text(d => d)
+		.attr('value', d => d)
+}
+
+function drawRoleAndChampionFilters(championSelectName, roleSelectName) {
+	drawChampionSelectFilter(championSelectName);
+	drawRoleSelectFilter(roleSelectName);
 }
 
 function drawTimeFilter() {
@@ -157,24 +176,108 @@ function bothSidesSelected() {
 	updateMap();
 }
 
+function getRole(dataRole, dataLane) {
+	if (dataLane === "JUNGLE") {
+		return "Jungle";
+	}
+	if (dataLane === "MIDDLE") {
+		return "Mid";
+	}
+	if (dataLane === "TOP") {
+		return "Top";
+	}
+	if (dataLane === "BOTTOM") {
+		if (dataRole === "DUO_SUPPORT") {
+			return "Support";
+		}
+		if (dataRole === "DUO_CARRY") {
+			return "ADC";
+		}
+	}
+	return "Unknown";
+}
+
+function getMatchDetails(datum) {
+ 	return matchDetailsPerGame[datum.matchId];
+}
+
+function filterByRoles(datum, roles, participantId) {
+	let details = getMatchDetails(datum).participantDetails[participantId];
+	return (roles[0] === "All roles" || 
+		roles.includes(getRole(details.role, details.lane)));
+}
+
+function filterGenericEvents(datum, champions, roles) {
+	let myId = getMatchDetails(datum).myParticipantId;
+	return filterByChampions(d, championSelected, myId) && filterByTime(d) 
+		&& filterBySide(d) && filterByRoles(d, roles, myId);
+}
+
+function filterByAssisters(datum, champions, roles) {
+	let assisters = datum.assistingParticipantIds;
+
+	for (let i in assisters) {
+		let id = assisters[i];
+		if (filterByRoles(datum, roles, id) 
+			&& filterByChampions(datum, champions, id)) {
+				return true;
+		}
+	}
+	return false;
+}
+
+function filterByVictim(datum, champions, roles) {
+	return filterByRoles(datum, roles, datum.victimId) 
+			&& filterByChampions(datum, champions, datum.victimId);
+}
+
+function filterByKiller(datum, champions, roles) {
+	return filterByRoles(datum, roles, datum.killerId) 
+			&& filterByChampions(datum, champions, datum.killerId);
+}
+
+function filterAssistsByParticipatingAllies(datum, allyChampions, allyRoles) {
+	return (filterByAssisters(datum, allyChampions, allyRoles) 
+		|| filterByKiller(datum, allyChampions, allyRoles));
+}
+
+function getSelectedChampions(componentName) {
+	return [d3.select(componentName).node().value];
+}
+
+function getSelectedRoles(componentName) {
+	return [d3.select(componentName).node().value];
+}
+
 function updateMap() {
 	if (!matchesData) {
 		return;
 	}
+	let championsSelf = getSelectedChampions('.championSelect-self');
+	let rolesSelf = getSelectedRoles('.roleSelect-self');
 
-	let filteredKills = matchesData.kills.filter(d => filterByChampionPlayed(d) 
-		&& filterByTime(d) && filterBySide(d));
+	let allyChampions = getSelectedChampions('.championSelect-ally');
+	let allyRoles = getSelectedRoles('.roleSelect-ally');
 
-	let filteredDeaths = matchesData.deaths.filter(d => filterByChampionPlayed(d)
-		&& filterByTime(d) && filterBySide(d));
+	let enemyChampions = getSelectedChampions('.championSelect-enemy');
+	let enemyRoles = getSelectedRoles('.roleSelect-enemy');
 
-	let filteredAssists = matchesData.assists.filter(d => filterByChampionPlayed(d)
-		&& filterByTime(d) && filterBySide(d));
+	let filteredKills = matchesData.kills.filter(d => 
+		filterGenericEvents(d, championsSelf, rolesSelf) 
+		&& filterByAssisters(d, allyChampions, allyRoles) 
+		&& filterByVictim(enemyChampions, enemyRoles));
+
+	let filteredDeaths = matchesData.deaths.filter(d => 
+		filterGenericEvents(d, championsSelf, rolesSelf)
+		&& filterByAssisters(d, enemyChampions, enemyRoles));
+
+	let filteredAssists = matchesData.assists.filter(d => 
+		filterGenericEvents(d, championsSelf, rolesSelf)
+		&& filterAssistsByParticipatingAllies(d, allyChampions, allyRoles)
+		&& filterByVictim(d, enemyChampions, enemyRoles));
 
 	let updatedKills = svg.selectAll('.kills').data(filteredKills, d => d.id);	
-
 	let updatedDeaths = svg.selectAll('.deaths').data(filteredDeaths, d => d.id);	
-
 	let updatedAssists = svg.selectAll('.assists').data(filteredAssists, d => d.id);	
 
 	renderDataPoints(updatedKills, 'kills');
@@ -193,7 +296,7 @@ function renderDataPoints(data, className) {
 }
 
 function filterBySide(datum) {
-	let isRed = matchDetailsPerGame[datum.matchId].isRed;
+	let isRed = getMatchDetails(datum).isRed;
 	return filterStates["side"] === "both" || 
 		(filterStates["side"] === "red" && isRed) || 
 		(filterStates["side"] === "blue" && !isRed);
@@ -205,11 +308,20 @@ function filterByTime(datum) {
 	return (datum.timestamp >= min && datum.timestamp <= max);
 }
 
-function filterByChampionPlayed(datum) {
-	let championSelected = d3.select('.championSelect').node().value;
-	let details = matchDetailsPerGame[datum.matchId];
-	return (championSelected === "All champions" || 
-		championData[championSelected].id === details.participantDetails[details.myParticipantId].championId);
+function filterByChampions(datum, champions, participantId) {
+	let details = getMatchDetails(datum);
+	if (championSelected[0] === "All champions") {
+		return true;
+	}
+	else {
+		let championPlayed = details.participantDetails[particpantId].championId;
+		for (let i in champions) {
+			if(championData[champions[i]].id === championPlayed) {
+				return true;
+			}
+		}
+		return false;	
+	}	
 }
 
 function renderMapKda() {

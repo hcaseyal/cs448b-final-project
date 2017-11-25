@@ -8,9 +8,9 @@ let express = require('express');
 let app = express();
 let fs = require('fs');
 
-const port = 8080; 
+const port = 8081; 
 let baseURL = 'https://na1.api.riotgames.com/lol/';
-let apiKey = 'RGAPI-37751fb9-eee8-490c-808a-a352d51a02b4';
+let apiKey = 'RGAPI-09b1543a-84f9-45ea-a26d-7e41cc858864';
 
 const queues = {2: "5v5 Blind Pick", 
 				4: "5v5 Ranked Solo",
@@ -51,7 +51,7 @@ app.listen(port, function () {
 	//TODO: remove prefetchData
 	//prefetchFavoritesMatchData();
 	//prefetchMasterLeagueMatchListData();
-	prefetchTimelinesAndDetailsData();
+	//prefetchTimelinesAndDetailsData();
 	console.log(`Server running at http://localhost:${port}/`)
 });
 
@@ -148,10 +148,14 @@ function readFiles(dirname, onFileContent, onError) {
   });
 }
 function prefetchFavoritesMatchData() {
-	let summonerList = 
+	/*let summonerList = 
 	["Trick2g", "Hikashikun", "Sirhcez", "Amrasarfeiniel", 
 	"FlowerKitten", "Reignover", "Meteos", "Voyboy", "Doublelift", "Bjergsen",
 	"Svenskeren", "HotGuySixPack", "Xmithie", "ILovePotatoChips", "xNaotox"];
+	*/
+
+	let summonerList = ["FlowerKitten", "Amrasarfeiniel", "Pyrolykos", 
+	"ILovePotatoChips"];
 
 	prefetchMatchListData(summonerList);
 }
