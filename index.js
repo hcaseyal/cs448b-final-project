@@ -62,7 +62,6 @@ function getAllMatchData(summoner) {
 		matchDetailsPerGame = matchesData.matchDetailsPerGame;
 		renderMapKda();
 		updateMap();
-		//displayAnalysis(data);
 	}
 	xhttp.onerror = () => analysisArea.text("Couldn't retrieve match data. " + xhttp.statusText);
 	xhttp.send();
@@ -93,6 +92,8 @@ function loadStaticData() {
 		championData = data.data;
 
 		drawRoleAndChampionFilters('.championSelect-self', '.roleSelect-self');
+		drawRoleAndChampionFilters('.championSelect-ally', '.roleSelect-ally');
+		drawRoleAndChampionFilters('.championSelect-enemy', '.roleSelect-enemy');
 	});
 }
 
@@ -176,6 +177,21 @@ function bothSidesSelected() {
 	updateMap();
 }
 
+function winOutcomeSelected() {
+	filterStates["outcome"] = "win";
+	updateMap();
+}
+
+function lossOutcomeSelected() {
+	filterStates["outcome"] = "loss";
+	updateMap();
+}
+
+function bothOutcomesSelected() {
+	filterStates["outcome"] = "both";
+	updateMap();
+}
+
 function getRole(dataRole, dataLane) {
 	if (dataLane === "JUNGLE") {
 		return "Jungle";
@@ -210,14 +226,19 @@ function filterByRoles(datum, roles, participantId) {
 function filterGenericEvents(datum, champions, roles) {
 	let myId = getMatchDetails(datum).myParticipantId;
 	return filterByChampions(d, championSelected, myId) && filterByTime(d) 
-		&& filterBySide(d) && filterByRoles(d, roles, myId);
+		&& filterBySide(d) && filterByRoles(d, roles, myId) 
+		&& filterByOutcome(d);
 }
 
 function filterByAssisters(datum, champions, roles) {
 	let assisters = datum.assistingParticipantIds;
+	let myId = getMatchDetails(datum).myParticipantId;
 
 	for (let i in assisters) {
 		let id = assisters[i];
+		if (id === myId) {
+			continue;
+		}
 		if (filterByRoles(datum, roles, id) 
 			&& filterByChampions(datum, champions, id)) {
 				return true;
@@ -283,6 +304,8 @@ function updateMap() {
 	renderDataPoints(updatedKills, 'kills');
 	renderDataPoints(updatedDeaths, 'deaths');
 	renderDataPoints(updatedAssists, 'assists');
+
+	displayAnalysis(filteredKills, filteredDeaths, filteredAssists);
 }
 
 function renderDataPoints(data, className) {
@@ -300,6 +323,13 @@ function filterBySide(datum) {
 	return filterStates["side"] === "both" || 
 		(filterStates["side"] === "red" && isRed) || 
 		(filterStates["side"] === "blue" && !isRed);
+}
+
+function filterByOutcome(datum) {
+	let isWin = getMatchDetails(datum).win;
+	return filterStates["outcome"] === "both" || 
+		(filterStates["outcome"] === "win" && isWin) || 
+		(filterStates["outcome"] === "loss" && !isWin);
 }
 
 function filterByTime(datum) {
@@ -340,5 +370,181 @@ function renderMapKda() {
 	console.log("Rendered map");
 }
 
-function displayAnalysis() {
+function increment(object, field, amount) {
+	if(object[field] === undefined) {
+		object[field] = 0;
+	}
+	object[field]+= amount;
+}
+
+function getAssistersForKills(event) {
+	return event.assistingParticipantIds;
+}
+
+function getAssistersForAssists(event) {
+	let ret = [];
+	let matchDetails = getMatchDetails(event);
+	for (let i in event.assistingParticipantIds) {
+		let id = event.assistingParticipantIds[i];
+		if (id !== matchDetails.myParticipantId) {
+			ret.push(id);
+		}
+	}
+	ret.push(event.killerId);
+	return ret;
+}
+
+function analyzeTakedowns(data, getAssisters) {
+	let participatingAllyChampions = {}; // championId -> frequency, role -> frequency
+	let participatingAllyRoles = {};
+	let victimChampions = {};
+	let victimRoles = {};
+
+	for(let i in data) {
+		let event = data[i];
+		let matchDetails = getMatchDetails(event);
+
+		let assisters = getAssisters(event);
+		for (let j in assisters) {
+			let id = assisters[j];
+			let details = matchDetails.participantDetails[id];
+			let championId = details.championId;
+			let role = getRole(details.role, details.lane);
+
+			increment(participatingAllyChampions, championId, 1);
+			increment(participatingAllyRoles, role, 1);
+		}
+		
+		// Enemy victim
+		let id = event.victimId;
+		let details = matchDetails.participantDetails[id];
+		let championId = details.championId;
+		let role = getRole(details.role, details.lane);
+		increment(victimChampions, championId, 1);
+		increment(victimRoles, role, 1);
+	}
+	return {participatingAllyChampions, participatingAllyRoles, victimChampions, victimRoles};
+}
+
+function combineKillsAndAssistsAnalysis(kills, assists) {
+	let ret = {};
+	ret.participatingAllyChampions = {};
+	ret.participatingAllyRoles = {};
+	ret.victimChampions = {};
+	ret.victimRoles = {};
+
+	for (let champion in kills.participatingAllyChampions) {
+		increment(ret.participatingAllyChampions, champion, kills.participatingAllyChampions[champion]);
+	}
+	for (let champion in assists.participatingAllyChampions) {
+		increment(ret.participatingAllyChampions, champion, assists.participatingAllyChampions[champion]);
+	}
+
+	for (let role in kills.participatingAllyRoles) {
+		increment(ret.participatingAllyRoles, role, kills.participatingAllyRoles[role]);
+	}
+	for (let role in assists.participatingAllyRoles) {
+		increment(ret.participatingAllyRoles, role, assists.participatingAllyRoles[role]);
+	}
+
+	for (let champion in kills.victimChampions) {
+		increment(ret.victimChampions, champion, kills.victimChampions[champion]);
+	}
+	for (let champion in assists.victimChampions) {
+		increment(ret.victimChampions, champion, assists.victimChampions[champion]);
+	}
+
+	for (let role in kills.victimRoles) {
+		increment(ret.victimRoles, role, kills.victimRoles[role]);
+	}
+	for (let role in assists.victimRoles) {
+		increment(ret.victimRoles, role, assists.victimRoles[role]);
+	}
+
+	return ret;
+}
+
+function getDeathAnalysisRatios(deaths, numTakedowns) {
+	let ret = {};
+	ret.participatingEnemyChampions = {};
+	ret.participatingEnemyRoles = {};
+
+	for (let champion in deaths.participatingAllyChampions) {
+		ret.participatingEnemyChampions[champion] = deaths.participatingAllyChampions[champion] / numTakedowns;
+	}
+
+	for (let role in deaths.participatingAllyRoles) {
+		ret.participatingEnemyRoles[role] = deaths.participatingAllyRoles[role] / numTakedowns;
+	}
+	return ret;
+}
+
+function getTakedownAnalysisRatios(killsAndAssists, numTakedowns) {
+	let ret = {};
+	ret.participatingAllyChampions = {};
+	ret.participatingAllyRoles = {};
+	ret.victimChampions = {};
+	ret.victimRoles = {};
+
+	for (let champion in killsAndAssists.participatingAllyChampions) {
+		ret.participatingAllyChampions[champion] = killsAndAssists.participatingAllyChampions[champion] / numTakedowns;
+	}
+
+	for (let role in killsAndAssists.participatingAllyRoles) {
+		ret.participatingAllyRoles[role] = killsAndAssists.participatingAllyRoles[role] / numTakedowns;
+	}
+
+	for (let champion in killsAndAssists.victimChampions) {
+		ret.victimChampions[champion] = killsAndAssists.victimChampions[champion] / numTakedowns;
+	}
+
+	for (let role in killsAndAssists.victimRoles) {
+		ret.victimRoles[role] = killsAndAssists.victimRoles[role] / numTakedowns;
+	}
+	return ret;
+}
+
+// From object "map" to sorted array
+function toSortedArray(map) {
+	let ret = [];
+	for (let championOrRole in map) {
+		ret.push({championOrRole, ratio : map[championOrRole]});
+	}
+
+	ret = ret.sort(function(x, y) {
+		return d3.descending(x.ratio, y.ratio);
+	});
+
+	return ret;
+}
+
+function displayAnalysis(filteredKills, filteredDeaths, filteredAssists) {
+	// Kills and assists
+	let killsAnalysis = analyzeTakedowns(filteredKills, getAssistersForKills);
+	let assistsAnalysis = analyzeTakedowns(filteredAssists, getAssistersForAssists);
+
+	let killsAndAssistsAnalysis = combineKillsAndAssistsAnalysis(killsAnalysis, assistsAnalysis);
+	
+	// Deaths
+	let deathsAnalysis = analyzeTakedowns(filteredDeaths, getAssistersForAssists);
+
+	let takedowns = getTakedownAnalysisRatios(killsAndAssistsAnalysis, filteredKills.length + filteredAssists.length);
+	let deaths = getDeathAnalysisRatios(deathsAnalysis, filteredDeaths.length);
+
+	let takedownAllyChamps = toSortedArray(takedowns.participatingAllyChampions);
+	let takedownAllyRoles = toSortedArray(takedowns.participatingAllyRoles);
+	let takedownVictimChamps = toSortedArray(takedowns.victimChampions);
+	let takedownVictimRoles = toSortedArray(takedown.victimRoles);
+	
+	let deathsEnemyChamps = toSortedArray(deaths.enemyChampions);
+	let deathsEnemyRoles = toSortedArray(deaths.enemyRoles);
+
+	let text = "takedownAllyChamps: " + JSON.stringify(takedownAllyChamps) 
+		+ "\n takedownAllyRoles: " + JSON.stringify(takedownAllyRoles)
+		+ "\n takedownVictimChamps: " + JSON.stringify(takedownVictimChamps)
+		+ "\n takedownVictimRoles: " + JSON.stringify(takedownVictimRoles)
+		+ "\n deathsEnemyChamps: " + JSON.stringify(deathsEnemyChamps)
+		+ "\n deathsEnemyRoles: " + JSON.stringify(deathsEnemyRoles);
+
+	analysisArea.text(text);
 }
