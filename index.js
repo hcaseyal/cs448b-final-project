@@ -8,7 +8,7 @@ var matchDetailsPerGame;
 var matchesData;
 var championData;
 
-var filterStates = {"side": "both"};
+var filterStates = {"side": "both", "outcome": "both"};
 
 // Domain for the current Summoner's Rift on the in-game mini-map
 var domain = {
@@ -225,9 +225,11 @@ function filterByRoles(datum, roles, participantId) {
 
 function filterGenericEvents(datum, champions, roles) {
 	let myId = getMatchDetails(datum).myParticipantId;
-	return filterByChampions(d, championSelected, myId) && filterByTime(d) 
-		&& filterBySide(d) && filterByRoles(d, roles, myId) 
-		&& filterByOutcome(d);
+	return filterByChampions(datum, champions, myId) &&
+		filterByTime(datum) &&
+		filterBySide(datum) &&
+		filterByRoles(datum, roles, myId) &&
+		filterByOutcome(datum);
 }
 
 function filterByAssisters(datum, champions, roles) {
@@ -286,7 +288,7 @@ function updateMap() {
 	let filteredKills = matchesData.kills.filter(d => 
 		filterGenericEvents(d, championsSelf, rolesSelf) 
 		&& filterByAssisters(d, allyChampions, allyRoles) 
-		&& filterByVictim(enemyChampions, enemyRoles));
+		&& filterByVictim(d, enemyChampions, enemyRoles));
 
 	let filteredDeaths = matchesData.deaths.filter(d => 
 		filterGenericEvents(d, championsSelf, rolesSelf)
@@ -340,11 +342,11 @@ function filterByTime(datum) {
 
 function filterByChampions(datum, champions, participantId) {
 	let details = getMatchDetails(datum);
-	if (championSelected[0] === "All champions") {
+	if (champions[0] === "All champions") {
 		return true;
 	}
 	else {
-		let championPlayed = details.participantDetails[particpantId].championId;
+		let championPlayed = details.participantDetails[participantId].championId;
 		for (let i in champions) {
 			if(championData[champions[i]].id === championPlayed) {
 				return true;
@@ -534,7 +536,7 @@ function displayAnalysis(filteredKills, filteredDeaths, filteredAssists) {
 	let takedownAllyChamps = toSortedArray(takedowns.participatingAllyChampions);
 	let takedownAllyRoles = toSortedArray(takedowns.participatingAllyRoles);
 	let takedownVictimChamps = toSortedArray(takedowns.victimChampions);
-	let takedownVictimRoles = toSortedArray(takedown.victimRoles);
+	let takedownVictimRoles = toSortedArray(takedowns.victimRoles);
 	
 	let deathsEnemyChamps = toSortedArray(deaths.enemyChampions);
 	let deathsEnemyRoles = toSortedArray(deaths.enemyRoles);
