@@ -1,12 +1,13 @@
 var mapWidth = 512,
 	mapHeight = 512,
 	bg = "img/map.png",
-    analysisArea = d3.select('.analysis-area');
+    analysisArea = d3.select('.analysis-area'),
 	visArea = d3.select('.vis-area');
 
 var matchDetailsPerGame;
 var matchesData;
 var championData;
+var championMap = {};
 
 var filterStates = {"side": "both", "outcome": "both"};
 
@@ -45,6 +46,47 @@ var svg = d3.select("#map").append("svg:svg")
 	    .attr('height', mapHeight);
 
 loadStaticData();
+ $('#enemyChampKilled').DataTable( {
+    columns: [
+        { title: "Champion Killed", data: "championOrRole" },
+        { title: "Ratio", data: "ratio"}
+    ]
+} );
+
+ $('#enemyRoleKilled').DataTable( {
+    columns: [
+        { title: "Role Killed", data: "championOrRole" },
+        { title: "Ratio", data: "ratio"}
+    ]
+} );
+
+ $('#participatingAllyChamps').DataTable( {
+    columns: [
+        { title: "Ally Champs in Takedowns", data: "championOrRole" },
+        { title: "Ratio", data: "ratio"}
+    ]
+} );
+
+ $('#participatingAllyRoles').DataTable( {
+    columns: [
+        { title: "Ally Roles in Takedowns", data: "championOrRole" },
+        { title: "Ratio", data: "ratio"}
+    ]
+} );
+
+ $('#participatingEnemyChamps').DataTable( {
+    columns: [
+        { title: "Enemy Champs in Deaths", data: "championOrRole" },
+        { title: "Ratio", data: "ratio"}
+    ]
+} );
+
+ $('#participatingEnemyRoles').DataTable( {
+    columns: [
+        { title: "Enemy Roles in Deaths", data: "championOrRole" },
+        { title: "Ratio", data: "ratio"}
+    ]
+} );
 drawTimeFilter();
 
 function searchSummoner() {
@@ -90,10 +132,18 @@ function loadStaticData() {
 			return console.warn(error);
 		}
 		championData = data.data;
-
+		createChampionMap(championData);
 		drawRoleAndChampionFilters('.championSelect-self', '.roleSelect-self');
 		drawRoleAndChampionFilters('.championSelect-ally', '.roleSelect-ally');
 		drawRoleAndChampionFilters('.championSelect-enemy', '.roleSelect-enemy');
+	});
+}
+
+// id -> name
+function createChampionMap(data) {
+	Object.keys(data).forEach(function(k){
+		let obj = data[k];
+		championMap[obj.id] = obj.name;
 	});
 }
 
@@ -208,6 +258,9 @@ function getRole(dataRole, dataLane) {
 		}
 		if (dataRole === "DUO_CARRY") {
 			return "ADC";
+		}
+		if (dataRole === "DUO") {
+			return "Bot lane - unknown role";
 		}
 	}
 	return "Unknown";
@@ -396,6 +449,7 @@ function getAssistersForAssists(event) {
 	return ret;
 }
 
+// Changes champion id to champion name in the process of analyzing
 function analyzeTakedowns(data, getAssisters) {
 	let participatingAllyChampions = {}; // championId -> frequency, role -> frequency
 	let participatingAllyRoles = {};
@@ -410,19 +464,19 @@ function analyzeTakedowns(data, getAssisters) {
 		for (let j in assisters) {
 			let id = assisters[j];
 			let details = matchDetails.participantDetails[id];
-			let championId = details.championId;
+			let champion = championMap[details.championId];
 			let role = getRole(details.role, details.lane);
 
-			increment(participatingAllyChampions, championId, 1);
+			increment(participatingAllyChampions, champion, 1);
 			increment(participatingAllyRoles, role, 1);
 		}
 		
 		// Enemy victim
 		let id = event.victimId;
 		let details = matchDetails.participantDetails[id];
-		let championId = details.championId;
+		let champion = championMap[details.championId];
 		let role = getRole(details.role, details.lane);
-		increment(victimChampions, championId, 1);
+		increment(victimChampions, champion, 1);
 		increment(victimRoles, role, 1);
 	}
 	return {participatingAllyChampions, participatingAllyRoles, victimChampions, victimRoles};
@@ -466,17 +520,22 @@ function combineKillsAndAssistsAnalysis(kills, assists) {
 	return ret;
 }
 
+// Converts from float to string in the process
+function formatRatio(num) {
+	return (num * 100).toFixed(2) + "%";
+}
+
 function getDeathAnalysisRatios(deaths, numTakedowns) {
 	let ret = {};
 	ret.participatingEnemyChampions = {};
 	ret.participatingEnemyRoles = {};
 
 	for (let champion in deaths.participatingAllyChampions) {
-		ret.participatingEnemyChampions[champion] = deaths.participatingAllyChampions[champion] / numTakedowns;
+		ret.participatingEnemyChampions[champion] = formatRatio(deaths.participatingAllyChampions[champion] / numTakedowns);
 	}
 
 	for (let role in deaths.participatingAllyRoles) {
-		ret.participatingEnemyRoles[role] = deaths.participatingAllyRoles[role] / numTakedowns;
+		ret.participatingEnemyRoles[role] = formatRatio(deaths.participatingAllyRoles[role] / numTakedowns);
 	}
 	return ret;
 }
@@ -489,19 +548,19 @@ function getTakedownAnalysisRatios(killsAndAssists, numTakedowns) {
 	ret.victimRoles = {};
 
 	for (let champion in killsAndAssists.participatingAllyChampions) {
-		ret.participatingAllyChampions[champion] = killsAndAssists.participatingAllyChampions[champion] / numTakedowns;
+		ret.participatingAllyChampions[champion] = formatRatio(killsAndAssists.participatingAllyChampions[champion] / numTakedowns);
 	}
 
 	for (let role in killsAndAssists.participatingAllyRoles) {
-		ret.participatingAllyRoles[role] = killsAndAssists.participatingAllyRoles[role] / numTakedowns;
+		ret.participatingAllyRoles[role] = formatRatio(killsAndAssists.participatingAllyRoles[role] / numTakedowns);
 	}
 
 	for (let champion in killsAndAssists.victimChampions) {
-		ret.victimChampions[champion] = killsAndAssists.victimChampions[champion] / numTakedowns;
+		ret.victimChampions[champion] = formatRatio(killsAndAssists.victimChampions[champion] / numTakedowns);
 	}
 
 	for (let role in killsAndAssists.victimRoles) {
-		ret.victimRoles[role] = killsAndAssists.victimRoles[role] / numTakedowns;
+		ret.victimRoles[role] = formatRatio(killsAndAssists.victimRoles[role] / numTakedowns);
 	}
 	return ret;
 }
@@ -518,6 +577,14 @@ function toSortedArray(map) {
 	});
 
 	return ret;
+}
+
+function displayNewTableData(selector, data) {
+	let datatable = $(selector).DataTable();
+	datatable.clear();
+	datatable.rows.add(data);
+	datatable.order([1, 'desc']);
+	datatable.draw();
 }
 
 function displayAnalysis(filteredKills, filteredDeaths, filteredAssists) {
@@ -538,15 +605,18 @@ function displayAnalysis(filteredKills, filteredDeaths, filteredAssists) {
 	let takedownVictimChamps = toSortedArray(takedowns.victimChampions);
 	let takedownVictimRoles = toSortedArray(takedowns.victimRoles);
 	
-	let deathsEnemyChamps = toSortedArray(deaths.enemyChampions);
-	let deathsEnemyRoles = toSortedArray(deaths.enemyRoles);
+	let deathsEnemyChamps = toSortedArray(deaths.participatingEnemyChampions);
+	let deathsEnemyRoles = toSortedArray(deaths.participatingEnemyRoles);
 
-	let text = "takedownAllyChamps: " + JSON.stringify(takedownAllyChamps) 
-		+ "\n takedownAllyRoles: " + JSON.stringify(takedownAllyRoles)
-		+ "\n takedownVictimChamps: " + JSON.stringify(takedownVictimChamps)
-		+ "\n takedownVictimRoles: " + JSON.stringify(takedownVictimRoles)
-		+ "\n deathsEnemyChamps: " + JSON.stringify(deathsEnemyChamps)
-		+ "\n deathsEnemyRoles: " + JSON.stringify(deathsEnemyRoles);
+	displayNewTableData('#enemyChampKilled', takedownVictimChamps);
 
-	analysisArea.text(text);
+	displayNewTableData('#enemyRoleKilled', takedownVictimRoles);
+
+	displayNewTableData('#participatingAllyChamps', takedownAllyChamps);
+
+	displayNewTableData('#participatingAllyRoles', takedownAllyRoles);
+
+	displayNewTableData('#participatingEnemyChamps', deathsEnemyChamps);
+	
+	displayNewTableData('#participatingEnemyRoles', deathsEnemyRoles);
 }

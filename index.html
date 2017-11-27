@@ -6,6 +6,8 @@
   <script src="d3.v3.min.js"></script> 
   <script src="jquery.js"></script>
   <link rel="stylesheet" href="jquery-ui.css">
+  <script src="DataTables/datatables.min.js"></script>
+  <link rel="stylesheet" href="DataTables/datatables.css">
  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>-->
   <!--<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script> -->
   <script src="jquery-ui.min.js"></script>
@@ -49,7 +51,14 @@
 		<div class="summmoner-name-display"></div>
 		<div id="map"></div>
 	</div>
-	<div class="analysis-area"></div>
+	<div class="analysis-area">
+		<table id="enemyChampKilled" class="display" width="100%"></table>
+		<table id="enemyRoleKilled" class="display" width="100%"></table>
+		<table id="participatingAllyChamps" class="display" width="100%"></table>
+		<table id="participatingAllyRoles" class="display" width="100%"></table>
+		<table id="participatingEnemyChamps" class="display" width="100%"></table>
+		<table id="participatingEnemyRoles" class="display" width="100%"></table>
+	</div>
 </body>
 
 <script src="index.js"></script>
