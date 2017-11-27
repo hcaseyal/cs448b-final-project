@@ -48,14 +48,14 @@ var svg = d3.select("#map").append("svg:svg")
 loadStaticData();
  $('#enemyChampKilled').DataTable( {
     columns: [
-        { title: "Champion Killed", data: "championOrRole" },
+        { title: "Champion Killed in Takedowns", data: "championOrRole" },
         { title: "Ratio", data: "ratio"}
     ]
 } );
 
  $('#enemyRoleKilled').DataTable( {
     columns: [
-        { title: "Role Killed", data: "championOrRole" },
+        { title: "Role Killed in Takedowns", data: "championOrRole" },
         { title: "Ratio", data: "ratio"}
     ]
 } );
@@ -617,6 +617,6 @@ function displayAnalysis(filteredKills, filteredDeaths, filteredAssists) {
 	displayNewTableData('#participatingAllyRoles', takedownAllyRoles);
 
 	displayNewTableData('#participatingEnemyChamps', deathsEnemyChamps);
-	
+
 	displayNewTableData('#participatingEnemyRoles', deathsEnemyRoles);
 }
