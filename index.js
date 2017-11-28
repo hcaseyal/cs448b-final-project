@@ -2,7 +2,8 @@ var mapWidth = 512,
 	mapHeight = 512,
 	bg = "img/map.png",
     analysisArea = d3.select('.analysis-area'),
-	visArea = d3.select('.vis-area');
+	visArea = d3.select('.vis-area'),
+	borderRadiusPadding = 7;
 
 var matchDetailsPerGame;
 var matchesData;
@@ -87,7 +88,94 @@ loadStaticData();
         { title: "Ratio", data: "ratio"}
     ]
 } );
+
+setupAreaFilter();
 drawTimeFilter();
+
+function setupAreaFilter() {
+	d3.select(".areaFilter-checkbox").on("change", d => {
+		if (d3.select(".areaFilter-checkbox").property("checked")) {
+			createAreaFilter();
+		}
+		else {
+			removeAreaFilter();
+		}
+	});
+}
+
+function removeAreaFilter() {
+	d3.select("#circleBorder").data({})
+		.exit().remove();
+
+	d3.select("#circle").data({})
+		.exit().remove();
+}
+
+function createAreaFilter() {
+	let xVal = 200;
+	let yVal = 200;
+	let rVal = 7
+
+	//Circle border
+	svg.append('circle')
+		.datum({x: xVal, y: yVal})
+	  .attr('r', rVal + borderRadiusPadding)
+	  .attr('cx', d => d.x)
+	  .attr('cy', d => d.y)
+	  .attr('id', 'circleBorder')
+	  .style('stroke', 'green')
+	  .style('stroke-width', '15px')
+	  .style('fill-opacity', 0)
+	  .call(d3.behavior.drag().on('drag', onBorderDrag));
+
+	// Circle fill
+	let circleDrag = d3.behavior.drag()
+	  	.origin(function(d) {return d; })
+	  	.on('drag', onCircleDrag);
+
+	svg.append('circle')
+		.datum({x: xVal, y: yVal})
+	  .attr('r', rVal)
+	  .attr('cx', d => d.x)
+	  .attr('cy', d => d.y)
+	  .attr('id', 'circle')
+	  .style('fill-opacity', 0.3)
+	  .call(circleDrag);
+
+	//d3.select(".areaFilter-checkbox").on("change", updateMap);
+}
+
+function onBorderDrag(datum) {
+	var cx = parseFloat(this.attributes.cx.value);
+	var cy = parseFloat(this.attributes.cy.value);
+	var delta = calculateDistanceBetweenPoints(
+		cx, cy,
+		d3.event.x, d3.event.y);
+	d3.select(this).attr('r', delta + borderRadiusPadding);
+
+	svg.select("#circle")
+		.attr('r', delta);
+		updateMap();
+}
+
+function onCircleDrag(datum, i) {
+	let filter = d3.select(this);
+	filter
+		.attr('cx', datum.x = d3.event.x)
+		.attr('cy', datum.y = d3.event.y);
+
+	d3.select("#circleBorder")
+	  .attr('cx', d3.event.x)
+	  .attr('cy',  d3.event.y)
+
+		updateMap();
+}
+
+function calculateDistanceBetweenPoints(x1, y1, x2, y2) {
+	let a = x1 - x2;
+	let b = y1 - y2;
+	return Math.sqrt(a*a + b*b);
+}
 
 function searchSummoner() {
 	var summoner = d3.select('.summoner-name').node().value;
