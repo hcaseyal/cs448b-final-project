@@ -417,6 +417,11 @@ function filterByAssisters(datum, champions, roles) {
 	let assisters = datum.assistingParticipantIds;
 	let myId = getMatchDetails(datum).myParticipantId;
 
+	if (champions[0] === "All champions" && 
+		roles[0] === "All roles") {
+		return true;
+	} 
+
 	for (let i in assisters) {
 		let id = assisters[i];
 		if (id === myId) {
@@ -587,18 +592,31 @@ function analyzeTakedowns(data, getAssisters) {
 	for(let i in data) {
 		let event = data[i];
 		let matchDetails = getMatchDetails(event);
-
 		let assisters = getAssisters(event);
-		for (let j in assisters) {
-			let id = assisters[j];
-			let details = matchDetails.participantDetails[id];
-			let champion = championMap[details.championId];
-			let role = getRole(details.role, details.lane);
 
-			increment(participatingAllyChampions, champion, 1);
-			increment(participatingAllyRoles, role, 1);
+		if (event.killerId === 0) {
+			increment(participatingAllyChampions, "Execute", 1);
+			increment(participatingAllyRoles, "Execute", 1);
 		}
-		
+
+		// if assisters is empty, then it's a solo kill
+		else if (assisters.length === 0) {
+			increment(participatingAllyChampions, "Solo kill", 1);
+			increment(participatingAllyRoles, "Solo kill", 1);
+		}
+
+		else {
+			for (let j in assisters) {
+				let id = assisters[j];
+				let details = matchDetails.participantDetails[id];
+				let champion = championMap[details.championId];
+				let role = getRole(details.role, details.lane);
+
+				increment(participatingAllyChampions, champion, 1);
+				increment(participatingAllyRoles, role, 1);
+			}
+		}
+
 		// Enemy victim
 		let id = event.victimId;
 		let details = matchDetails.participantDetails[id];
