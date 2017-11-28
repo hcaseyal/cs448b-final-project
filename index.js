@@ -100,6 +100,7 @@ function setupAreaFilter() {
 		else {
 			removeAreaFilter();
 		}
+		updateMap();
 	});
 }
 
@@ -114,7 +115,7 @@ function removeAreaFilter() {
 function createAreaFilter() {
 	let xVal = 200;
 	let yVal = 200;
-	let rVal = 7
+	let rVal = 20
 
 	//Circle border
 	svg.append('circle')
@@ -155,7 +156,7 @@ function onBorderDrag(datum) {
 
 	svg.select("#circle")
 		.attr('r', delta);
-		updateMap();
+	updateMap();
 }
 
 function onCircleDrag(datum, i) {
@@ -168,7 +169,7 @@ function onCircleDrag(datum, i) {
 	  .attr('cx', d3.event.x)
 	  .attr('cy',  d3.event.y)
 
-		updateMap();
+	updateMap();
 }
 
 function calculateDistanceBetweenPoints(x1, y1, x2, y2) {
@@ -189,6 +190,25 @@ function getAllMatchData(summoner) {
 	xhttp.open("GET", url);
 	xhttp.onload = () => {
 		matchesData = JSON.parse(xhttp.responseText);
+
+		for (let i in matchesData.kills) {
+			let d = matchesData.kills[i];
+			d.cx = +xScale(d.position.x);
+			d.cy = +yScale(d.position.y);
+		};
+
+		for (let i in matchesData.deaths) {
+			let d = matchesData.deaths[i];
+			d.cx = +xScale(d.position.x);
+			d.cy = +yScale(d.position.y);
+		};
+
+		for (let i in matchesData.assists) {
+			let d = matchesData.assists[i];
+			d.cx = +xScale(d.position.x);
+			d.cy = +yScale(d.position.y);
+		};
+
 		matchDetailsPerGame = matchesData.matchDetailsPerGame;
 		renderMapKda();
 		updateMap();
@@ -370,7 +390,27 @@ function filterGenericEvents(datum, champions, roles) {
 		filterByTime(datum) &&
 		filterBySide(datum) &&
 		filterByRoles(datum, roles, myId) &&
-		filterByOutcome(datum);
+		filterByOutcome(datum) && 
+		filterByArea(datum);
+}
+
+function inCircle(datum) {
+	let circle = d3.select("#circle").node();
+
+	var cx = circle.attributes.cx.value;
+	var cy = circle.attributes.cy.value;
+	var radius = circle.attributes.r.value;
+
+	return (Math.pow(datum.cx - cx, 2) + Math.pow(datum.cy - cy, 2) < Math.pow(radius, 2));
+}
+
+function filterByArea(datum) {
+	if (d3.select(".areaFilter-checkbox").property("checked")) {
+		return inCircle(datum);
+	} 
+	else {
+		return true;
+	}
 }
 
 function filterByAssisters(datum, champions, roles) {
@@ -455,8 +495,8 @@ function renderDataPoints(data, className) {
 	data.exit().remove();
 	data.enter()
 		.append('svg:circle')
-		.attr('cx', function(d) { return xScale(d.position.x) })
-        .attr('cy', function(d) { return yScale(d.position.y) })
+		.attr('cx', function(d) { return d.cx })
+        .attr('cy', function(d) { return d.cy })
         .attr('r', 5)
 		.attr('class', className);
 }
