@@ -124,38 +124,44 @@ function removeAreaFilter() {
 		.exit().remove();
 }
 
-function createAreaFilter() {
-	let xVal = 200;
-	let yVal = 200;
-	let rVal = 20
+function drawAreaFilter(params) {
+	// Circle fill
+	let circleDrag = d3.behavior.drag();
+	circleDrag.origin(function(d) {return d; });
+	circleDrag.on('drag', onCircleDrag);
+	circleDrag.on('dragend', onDragEnd);
+
+
+	let borderDrag = d3.behavior.drag();
+	borderDrag.on('drag', onBorderDrag);
+	borderDrag.on('dragend', onDragEnd);
 
 	//Circle border
 	svg.append('circle')
-		.datum({x: xVal, y: yVal})
-	  .attr('r', rVal + borderRadiusPadding)
+		.datum({x: params.xVal, y: params.yVal, r: params.rVal})
+	  .attr('r', params.rVal + borderRadiusPadding)
 	  .attr('cx', d => d.x)
 	  .attr('cy', d => d.y)
 	  .attr('id', 'circleBorder')
 	  .style('stroke', 'green')
 	  .style('stroke-width', '15px')
 	  .style('fill-opacity', 0)
-	  .call(d3.behavior.drag().on('drag', onBorderDrag));
-
-	// Circle fill
-	let circleDrag = d3.behavior.drag()
-	  	.origin(function(d) {return d; })
-	  	.on('drag', onCircleDrag);
+	  .call(borderDrag);
+	  
 
 	svg.append('circle')
-		.datum({x: xVal, y: yVal})
-	  .attr('r', rVal)
+		.datum({x: params.xVal, y: params.yVal, r: params.rVal})
+	  .attr('r', params.rVal)
 	  .attr('cx', d => d.x)
 	  .attr('cy', d => d.y)
 	  .attr('id', 'circle')
 	  .style('fill-opacity', 0.3)
 	  .call(circleDrag);
+}
 
-	//d3.select(".areaFilter-checkbox").on("change", updateMap);
+function createAreaFilter() {
+	let params = {xVal: 200, yVal: 200, rVal: 20};
+	drawAreaFilter(params);
 }
 
 function onBorderDrag(datum) {
@@ -164,11 +170,23 @@ function onBorderDrag(datum) {
 	var delta = calculateDistanceBetweenPoints(
 		cx, cy,
 		d3.event.x, d3.event.y);
+	datum.r = delta;
 	d3.select(this).attr('r', delta + borderRadiusPadding);
 
 	svg.select("#circle")
 		.attr('r', delta);
+
 	updateMap();
+}
+
+// Re-render the area filter when we stop dragging
+// so that the area filter is on top of the data points
+function onDragEnd(datum, i) {
+	let params = {xVal: datum.x, yVal: datum.y, rVal: datum.r}
+
+	d3.select('#circle').remove();
+	d3.select('#circleBorder').remove();
+	drawAreaFilter(params);
 }
 
 function onCircleDrag(datum, i) {
@@ -207,18 +225,21 @@ function getAllMatchData(summoner) {
 			let d = matchesData.kills[i];
 			d.cx = +xScale(d.position.x);
 			d.cy = +yScale(d.position.y);
+			d.eventType = "kills";
 		};
 
 		for (let i in matchesData.deaths) {
 			let d = matchesData.deaths[i];
 			d.cx = +xScale(d.position.x);
 			d.cy = +yScale(d.position.y);
+			d.eventType = "deaths";
 		};
 
 		for (let i in matchesData.assists) {
 			let d = matchesData.assists[i];
 			d.cx = +xScale(d.position.x);
 			d.cy = +yScale(d.position.y);
+			d.eventType = "assists";
 		};
 
 		matchDetailsPerGame = matchesData.matchDetailsPerGame;
@@ -496,25 +517,45 @@ function updateMap() {
 		&& filterAssistsByParticipatingAllies(d, allyChampions, allyRoles)
 		&& filterByVictim(d, enemyChampions, enemyRoles));
 
-	let updatedKills = svg.selectAll('.kills').data(filteredKills, d => d.id);	
-	let updatedDeaths = svg.selectAll('.deaths').data(filteredDeaths, d => d.id);	
-	let updatedAssists = svg.selectAll('.assists').data(filteredAssists, d => d.id);	
+	let filteredEvents = filteredKills.concat(filteredDeaths).concat(filteredAssists);
 
-	renderDataPoints(updatedKills, 'kills');
-	renderDataPoints(updatedDeaths, 'deaths');
-	renderDataPoints(updatedAssists, 'assists');
+	// Randomize filteredEvents rendering order so distribution of events is more even
+	filteredEvents = shuffle(filteredEvents);
+	let updatedEvents= svg.selectAll('.event').data(filteredEvents, d => d.id);	
+
+	renderDataPoints(updatedEvents);
 
 	displayAnalysis(filteredKills, filteredDeaths, filteredAssists);
 }
 
-function renderDataPoints(data, className) {
+function shuffle(array) {
+  var currentIndex = array.length, temporaryValue, randomIndex;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}
+
+function renderDataPoints(data) {
 	data.exit().remove();
 	data.enter()
 		.append('svg:circle')
 		.attr('cx', function(d) { return d.cx })
         .attr('cy', function(d) { return d.cy })
         .attr('r', 5)
-		.attr('class', className);
+		.attr('class', function(d) { return d.eventType })
+		.classed('event', true);
 }
 
 function filterBySide(datum) {
