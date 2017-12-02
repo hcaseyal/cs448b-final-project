@@ -8,7 +8,7 @@ let express = require('express');
 let app = express();
 let fs = require('fs');
 
-const port = 8082; 
+const port = 8080; 
 let baseURL = 'https://na1.api.riotgames.com/lol/';
 let apiKey = 'RGAPI-dce505ed-21a4-4809-89c8-1ccc16ac1bfb';
 
@@ -49,7 +49,9 @@ app.get('/all-match-data', function (req, res) {
 
 app.listen(port, function () {
 	//TODO: remove prefetchData
-	//prefetchFavoritesMatchData();
+	//prefetchFavoritesMatchData(); // YO don't call 
+	prefetchFavoritesTimelinesData(); // these at same time because asynchronous
+	
 	//prefetchMasterLeagueMatchListData();
 	//prefetchTimelinesAndDetailsData();
 	console.log(`Server running at http://localhost:${port}/`)
@@ -154,8 +156,8 @@ function prefetchFavoritesMatchData() {
 	"Svenskeren", "HotGuySixPack", "Xmithie", "ILovePotatoChips", "xNaotox"];
 	*/
 
-	let summonerList = ["FlowerKitten", "Amrasarfeiniel", "Pyrolykos", 
-	"ILovePotatoChips"];
+	let summonerList = ["FlowerKitten", "AmrasArFeiniel", "Pyrolykos", "Tanonev",
+						"PerniciousRage", "ILovePotatoChips", "xNaotox", "Hikashikun", "Meteos"];
 
 	prefetchMatchListData(summonerList);
 }
@@ -171,6 +173,20 @@ function prefetchMatchListData(summonerNames) {
 		}, 1500 * requestContext.requestId);
 		requestContext.requestId++;
 	}
+}
+
+function prefetchFavoritesTimelinesData() {
+	let summonerList = ["FlowerKitten", "AmrasArFeiniel", "Pyrolykos", "Tanonev",
+						"PerniciousRage", "ILovePotatoChips", "xNaotox", "Hikashikun", "Meteos"];
+
+	let requestContext = {requestId: 0};
+	let gameIdCache = {};
+	readFiles("./matchlist_data/", function(filename, content) {
+		if (summonerList.some(name => filename.includes(name))) {
+			onMatchlistFileContent(filename, content, requestContext, gameIdCache);
+		}
+	},
+	(error) => console.log(error));
 }
 
 function fetchAndWriteMatchList(info, name, requestContext) {
