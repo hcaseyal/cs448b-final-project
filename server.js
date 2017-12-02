@@ -8,9 +8,9 @@ let express = require('express');
 let app = express();
 let fs = require('fs');
 
-const port = 8081; 
+const port = 8082; 
 let baseURL = 'https://na1.api.riotgames.com/lol/';
-let apiKey = 'RGAPI-e7e5b3c4-a8fc-4ef3-8570-ddd484b0dee0';
+let apiKey = 'RGAPI-dce505ed-21a4-4809-89c8-1ccc16ac1bfb';
 
 const queues = {2: "5v5 Blind Pick", 
 				4: "5v5 Ranked Solo",

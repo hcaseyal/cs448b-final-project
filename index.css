@@ -21,3 +21,27 @@
 .assists {
 	fill: purple;
 }
+
+.interactive-area {
+	flex: 1;
+	padding: 5px;
+}
+
+.analysis-area {
+	flex: 2;
+	padding: 5px;
+}
+
+.layout {
+	display: flex;
+}
+
+.analysis-layout {
+	table-layout: fixed;
+}
+
+td {
+	vertical-align: top;
+	width: 1%;
+	padding: 15px;
+}

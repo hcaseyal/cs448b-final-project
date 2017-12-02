@@ -14,52 +14,78 @@
 </head>
 
 <body>
-	<div class="summoner-name-wrapper">Summoner: 
-		<input class="summoner-name"></input>
-		<input type="button" class="enter-btn" value="Enter" onclick="searchSummoner()"></input>
-	</div>
+	<div class="layout">
+		<div class="interactive-area">
+			<div class="summoner-name-wrapper">Summoner: 
+				<input class="summoner-name"></input>
+				<input type="button" class="enter-btn" value="Enter" onclick="searchSummoner()"></input>
+			</div>
 
-	<div class="filters">
-		Self:
-		<select class="championSelect-self"></select>
-		<select class="roleSelect-self"></select>
-		<br/>
-		Allies:
-		<select class="championSelect-ally"></select>
-		<select class="roleSelect-ally"></select>
-		<br/>
-		Enemies:
-		<select class="championSelect-enemy"></select>
-		<select class="roleSelect-enemy"></select>
-		<div class="timeSliderWrapper">
-			<div class="timeSlider"> </div>
+			<div class="filters">
+				Self:
+				<select class="championSelect-self"></select>
+				<select class="roleSelect-self"></select>
+				<br/>
+				Allies:
+				<select class="championSelect-ally"></select>
+				<select class="roleSelect-ally"></select>
+				<br/>
+				Enemies:
+				<select class="championSelect-enemy"></select>
+				<select class="roleSelect-enemy"></select>
+				<div class="timeSliderWrapper">
+					<div class="timeSlider"> </div>
+				</div>
+
+				<div class="timeSliderText"> minutes </div>
+
+				<input type="radio" name="sideSelect" id="blueSide" value="blueSide" onclick="blueSideSelected()" />Blue
+				<input type="radio" name="sideSelect" id="redSide" value="redSide" onclick="redSideSelected()" />Red
+				<input type="radio" name="sideSelect" id="bothSides" value="bothSides" onclick="bothSidesSelected()" checked />Both
+
+				<br/>
+				<input type="radio" name="outcomeSelect" id="winOutcome" value="winOutcome" onclick="winOutcomeSelected()" />Win
+				<input type="radio" name="outcomeSelect" id="lossOutcome" value="lossOutcome" onclick="lossOutcomeSelected()" />Loss
+				<input type="radio" name="outcomeSelect" id="bothOutcomes" value="bothOutcomes" onclick="bothOutcomesSelected()" checked />Both
+				<br/>
+				Enable area filter <input type="checkbox" class="areaFilter-checkbox">
+
+			</div>
+			<div class="vis-area">
+				<div class="summmoner-name-display"></div>
+				<div id="map"></div>
+			</div>
 		</div>
-
-		<div class="timeSliderText"> minutes </div>
-
-		<input type="radio" name="sideSelect" id="blueSide" value="blueSide" onclick="blueSideSelected()" />Blue
-		<input type="radio" name="sideSelect" id="redSide" value="redSide" onclick="redSideSelected()" />Red
-		<input type="radio" name="sideSelect" id="bothSides" value="bothSides" onclick="bothSidesSelected()" checked />Both
-
-		<br/>
-		<input type="radio" name="outcomeSelect" id="winOutcome" value="winOutcome" onclick="winOutcomeSelected()" />Win
-		<input type="radio" name="outcomeSelect" id="lossOutcome" value="lossOutcome" onclick="lossOutcomeSelected()" />Loss
-		<input type="radio" name="outcomeSelect" id="bothOutcomes" value="bothOutcomes" onclick="bothOutcomesSelected()" checked />Both
-		<br/>
-		Enable area filter <input type="checkbox" class="areaFilter-checkbox">
-
-	</div>
-	<div class="vis-area">
-		<div class="summmoner-name-display"></div>
-		<div id="map"></div>
-	</div>
-	<div class="analysis-area">
-		<table id="enemyChampKilled" class="display" width="100%"></table>
-		<table id="enemyRoleKilled" class="display" width="100%"></table>
-		<table id="participatingAllyChamps" class="display" width="100%"></table>
-		<table id="participatingAllyRoles" class="display" width="100%"></table>
-		<table id="participatingEnemyChamps" class="display" width="100%"></table>
-		<table id="participatingEnemyRoles" class="display" width="100%"></table>
+		<div class="analysis-area">
+			<table class="analysis-layout">
+				<tbody>
+					<tr>
+						<td>
+							<table id="enemyRoleKilled" class="display" width="100%"></table>
+						</td>
+						<td>
+							<table id="enemyChampKilled" class="display" width="100%"></table>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<table id="participatingAllyRoles" class="display" width="100%"></table>
+						</td>
+						<td>
+							<table id="participatingAllyChamps" class="display" width="100%"></table>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<table id="participatingEnemyRoles" class="display" width="100%"></table>
+						</td>
+						<td>
+							<table id="participatingEnemyChamps" class="display" width="100%"></table>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
 	</div>
 </body>
 

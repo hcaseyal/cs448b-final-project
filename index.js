@@ -33,7 +33,7 @@ yScale = d3.scale.linear()
   .range([mapHeight, 0]);
 
 // Node server url
-var baseURL = "http://localhost:8081/";
+var baseURL = "http://localhost:8082/";
 
 var svg = d3.select("#map").append("svg:svg")
 	    .attr("width", mapWidth)
@@ -47,44 +47,56 @@ var svg = d3.select("#map").append("svg:svg")
 	    .attr('height', mapHeight);
 
 loadStaticData();
- $('#enemyChampKilled').DataTable( {
-    columns: [
-        { title: "Champion Killed in Takedowns", data: "championOrRole" },
-        { title: "Ratio", data: "ratio"}
-    ]
-} );
-
  $('#enemyRoleKilled').DataTable( {
+ 	paging: false,
     columns: [
         { title: "Role Killed in Takedowns", data: "championOrRole" },
         { title: "Ratio", data: "ratio"}
     ]
 } );
 
- $('#participatingAllyChamps').DataTable( {
+ $('#enemyChampKilled').DataTable( {
+ 	pageLength: 6,
+ 	lengthChange: false,
+ 	pagingType: "full",
     columns: [
-        { title: "Ally Champs in Takedowns", data: "championOrRole" },
+        { title: "Champion Killed in Takedowns", data: "championOrRole" },
         { title: "Ratio", data: "ratio"}
     ]
 } );
 
  $('#participatingAllyRoles').DataTable( {
+ 	paging: false,
     columns: [
         { title: "Ally Roles in Takedowns", data: "championOrRole" },
         { title: "Ratio", data: "ratio"}
     ]
 } );
 
- $('#participatingEnemyChamps').DataTable( {
+ $('#participatingAllyChamps').DataTable( {
+ 	pageLength: 7,
+ 	lengthChange: false,
+ 	pagingType: "full",
     columns: [
-        { title: "Enemy Champs in Deaths", data: "championOrRole" },
+        { title: "Ally Champs in Takedowns", data: "championOrRole" },
         { title: "Ratio", data: "ratio"}
     ]
 } );
 
  $('#participatingEnemyRoles').DataTable( {
+ 	paging: false,
     columns: [
         { title: "Enemy Roles in Deaths", data: "championOrRole" },
+        { title: "Ratio", data: "ratio"}
+    ]
+} );
+
+ $('#participatingEnemyChamps').DataTable( {
+ 	pageLength: 7,
+ 	lengthChange: false,
+ 	pagingType: "full",
+    columns: [
+        { title: "Enemy Champs in Deaths", data: "championOrRole" },
         { title: "Ratio", data: "ratio"}
     ]
 } );
