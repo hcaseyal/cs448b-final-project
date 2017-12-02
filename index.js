@@ -47,6 +47,13 @@ var svg = d3.select("#map").append("svg:svg")
 	    .attr('height', mapHeight);
 
 loadStaticData();
+
+$(".summoner-name").keyup(function(event) {
+    if (event.keyCode === 13) {
+        $(".enter-btn").click();
+    }
+});
+
  $('#enemyRoleKilled').DataTable( {
  	paging: false,
     columns: [
