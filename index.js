@@ -222,7 +222,6 @@ function getAllMatchData(summoner) {
 		};
 
 		matchDetailsPerGame = matchesData.matchDetailsPerGame;
-		renderMapKda();
 		updateMap();
 	}
 	xhttp.onerror = () => analysisArea.text("Couldn't retrieve match data. " + xhttp.statusText);
@@ -552,22 +551,6 @@ function filterByChampions(datum, champions, participantId) {
 		}
 		return false;	
 	}	
-}
-
-function renderMapKda() {
-	let kills = svg.selectAll('.kills')
-		.data(matchesData.kills, d => d.id);
-	renderDataPoints(kills, 'kills');
-
-	let deaths = svg.selectAll('.deaths')
-		.data(matchesData.deaths, d => d.id);
-	renderDataPoints(deaths, 'deaths');
-
-	let assists = svg.selectAll('.assists')
-		.data(matchesData.assists, d => d.id);
-	renderDataPoints(assists, 'assists');
-
-	console.log("Rendered map");
 }
 
 function increment(object, field, amount) {
