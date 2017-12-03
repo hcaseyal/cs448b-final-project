@@ -50,7 +50,7 @@ loadStaticData();
 
 $(".summoner-name").keyup(function(event) {
     if (event.keyCode === 13) {
-        $(".enter-btn").click();
+        searchSummoner();
     }
 });
 

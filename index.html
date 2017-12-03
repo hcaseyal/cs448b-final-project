@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="jquery-ui.css">
   <script src="DataTables/datatables.min.js"></script>
   <link rel="stylesheet" href="DataTables/datatables.css">
+  <link rel="stylesheet" href="node_modules/@blueprintjs/core/dist/blueprint.css">
  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>-->
   <!--<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script> -->
   <script src="jquery-ui.min.js"></script>
@@ -16,9 +17,11 @@
 <body>
 	<div class="layout">
 		<div class="interactive-area">
-			<div class="summoner-name-wrapper">Summoner: 
-				<input class="summoner-name"></input>
-				<input type="button" class="enter-btn" value="Enter" onclick="searchSummoner()"></input>
+			<div class="summoner-name-wrapper search-bar">
+				<div class="pt-input-group">
+				  <span class="pt-icon pt-icon-search" onclick="searchSummoner()"></span>
+				  <input class="pt-input summoner-name" type="search" placeholder="Search for a Summoner" dir="auto" />
+				</div>
 			</div>
 
 			<div class="filters">
@@ -48,8 +51,12 @@
 				<input type="radio" name="outcomeSelect" id="lossOutcome" value="lossOutcome" onclick="lossOutcomeSelected()" />Loss
 				<input type="radio" name="outcomeSelect" id="bothOutcomes" value="bothOutcomes" onclick="bothOutcomesSelected()" checked />Both
 				<br/>
-				Enable area filter <input type="checkbox" class="areaFilter-checkbox">
 
+				<label class="pt-control pt-switch .modifier">
+				  <input type="checkbox" class="areaFilter-checkbox" />
+				  <span class="pt-control-indicator"></span>
+				  Area Filter
+				</label>
 			</div>
 			<div class="vis-area">
 				<div class="summmoner-name-display"></div>

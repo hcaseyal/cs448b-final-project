@@ -8,7 +8,7 @@ let express = require('express');
 let app = express();
 let fs = require('fs');
 
-const port = 8080; 
+const port = 8082; 
 let baseURL = 'https://na1.api.riotgames.com/lol/';
 let apiKey = 'RGAPI-dce505ed-21a4-4809-89c8-1ccc16ac1bfb';
 
@@ -50,7 +50,7 @@ app.get('/all-match-data', function (req, res) {
 app.listen(port, function () {
 	//TODO: remove prefetchData
 	//prefetchFavoritesMatchData(); // YO don't call 
-	prefetchFavoritesTimelinesData(); // these at same time because asynchronous
+	//prefetchFavoritesTimelinesData(); // these at same time because asynchronous
 	
 	//prefetchMasterLeagueMatchListData();
 	//prefetchTimelinesAndDetailsData();
