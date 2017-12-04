@@ -485,7 +485,7 @@ function getMatchDetails(datum) {
 
 function filterByRoles(datum, roles, participantId) {
 	let details = getMatchDetails(datum).participantDetails[participantId];
-	if (roles.length === 0 || roles[0].value === "All roles") {
+	if (roles.length === 0) {
 		return true;
 	}
 	for (let i = 0; i < roles.length; i++) {
@@ -529,8 +529,8 @@ function filterByAssisters(datum, champions, roles) {
 	let assisters = datum.assistingParticipantIds;
 	let myId = getMatchDetails(datum).myParticipantId;
 
-	if (champions[0] === "All champions" && 
-		roles[0] === "All roles") {
+	if (champions.length === 0 && 
+		roles.length === 0) {
 		return true;
 	} 
 
@@ -660,7 +660,7 @@ function filterByTime(datum) {
 
 function filterByChampions(datum, champions, participantId) {
 	let details = getMatchDetails(datum);
-	if (champions.length === 0 || champions[0].innerText === "All champions") {
+	if (champions.length === 0) {
 		return true;
 	}
 	else {
