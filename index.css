@@ -41,3 +41,12 @@
 	width: 1%;
 	padding: 15px;
 }
+
+.filter-cell {
+	padding: 3px;
+}
+
+.filter-cell-header {
+	text-align: right;
+	font-weight: bold;
+}
