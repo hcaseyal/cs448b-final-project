@@ -110,6 +110,7 @@ $(".summoner-name").keyup(function(event) {
 
 setupAreaFilter();
 drawTimeFilter();
+drawLegend();
 
 function setupAreaFilter() {
 	d3.select(".areaFilter-checkbox").on("change", d => {
@@ -361,6 +362,38 @@ function drawTimeFilter() {
 	  slide: onSliderChange
 	});
 	redrawSliderText([0, 60]);
+}
+
+function drawLegend() {
+	d3.select('.killLegend')
+		.append("svg")
+		.attr("width", 20)
+		.attr("height", 20)
+		.append("svg:circle")
+		.attr('r', 5)
+		.attr('cx', 10)
+		.attr('cy', 10)
+		.classed("kills", true);
+
+	d3.select('.deathLegend')
+		.append("svg")
+		.attr("width", 20)
+		.attr("height", 20)
+		.append("svg:circle")
+		.attr('r', 5)
+		.attr('cx', 10)
+		.attr('cy', 10)
+		.classed("deaths", true);
+
+	d3.select('.assistLegend')
+		.append("svg")
+		.attr("width", 20)
+		.attr("height", 20)
+		.append("svg:circle")
+		.attr('r', 5)
+		.attr('cx', 10)
+		.attr('cy', 10)
+		.classed("assists", true);
 }
 
 function onSliderChange(event, ui) {

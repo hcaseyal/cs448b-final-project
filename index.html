@@ -64,11 +64,19 @@
 				<input type="radio" name="outcomeSelect" id="bothOutcomes" value="bothOutcomes" onclick="bothOutcomesSelected()" checked />Both
 				<br/>
 
-				<label class="pt-control pt-switch areaFilter-switch">
-				  <input type="checkbox" class="areaFilter-checkbox" />
-				  <span class="pt-control-indicator"></span>
-				  Area Filter
-				</label>
+				<div class="flexContainer">
+					<div class="flexAreaFilterContainer">
+						<label class="pt-control pt-switch areaFilter-switch">
+						  <input type="checkbox" class="areaFilter-checkbox" />
+						  <span class="pt-control-indicator"></span>
+						  Area Filter
+						</label>
+					</div>
+
+					<div class="rightAlign flexTwoContainer"> kill = </div> <div class="killLegend flexOneContainer"> </div>
+					<div class="rightAlign flexTwoContainer"> death = </div> <div class="deathLegend flexOneContainer"> </div>
+					<div class="rightAlign flexTwoContainer"> assist = </div> <div class="assistLegend flexOneContainer"> </div>
+				</div>
 			</div>
 			<div class="vis-area">
 				<div class="summmoner-name-display"></div>

@@ -18,8 +18,32 @@
 	fill: purple;
 }
 
+.killLegend {
+	text-align: left;
+}
+
+.rightAlign {
+	text-align: right;
+}
+
 .areaFilter-switch {
 	width: 120px;
+}
+
+.flexContainer {
+	display: flex;
+}
+
+.flexOneContainer {
+	flex: 1;
+}
+
+.flexTwoContainer {
+	flex: 2;
+}
+
+.flexAreaFilterContainer {
+	flex: 10;
 }
 
 .interactive-area {
