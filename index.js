@@ -472,7 +472,7 @@ function getRole(dataRole, dataLane) {
 		if (dataRole === "DUO_CARRY") {
 			return "ADC";
 		}
-		if (dataRole === "DUO") {
+		if (dataRole === "DUO" || dataRole === "SOLO" || dataRole === "NONE") {
 			return "Bot lane - unknown role";
 		}
 	}

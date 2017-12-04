@@ -8,7 +8,7 @@ let express = require('express');
 let app = express();
 let fs = require('fs');
 
-const port = 8082; 
+const port = 8080; 
 let baseURL = 'https://na1.api.riotgames.com/lol/';
 let apiKey = 'RGAPI-39f977f6-d666-4fc0-9c90-c61e53913c6e';
 
@@ -50,7 +50,7 @@ app.get('/all-match-data', function (req, res) {
 app.listen(port, function () {
 	//TODO: remove prefetchData
 	//prefetchFavoritesMatchData(); // YO don't call 
-	//prefetchFavoritesTimelinesData(); // these at same time because asynchronous
+	prefetchFavoritesTimelinesData(); // these at same time because asynchronous
 	
 	//prefetchMasterLeagueMatchListData();
 	//prefetchTimelinesAndDetailsData();
@@ -65,7 +65,8 @@ function onMatchlistFileContent(filename, content, requestContext, gameIdCache) 
 
 		if (!gameIdCache[gameId]) {
 			if (fs.existsSync(timelineFilename(gameId)) 
-				|| fs.existsSync(matchDetailsFilename(gameId))) {
+				&& fs.existsSync(matchDetailsFilename(gameId))) {
+				console.log("found game cache id");
 				gameIdCache[gameId] = true;
 			}
 			else {
@@ -84,6 +85,7 @@ function onMatchlistFileContent(filename, content, requestContext, gameIdCache) 
 			}
 		}
 	}
+	console.log("Number of matches for Pyro: " + matches.length);
 }
 
 function timelineFilename(matchId) {
@@ -158,9 +160,10 @@ function prefetchFavoritesMatchData() {
 	"Svenskeren", "HotGuySixPack", "Xmithie", "ILovePotatoChips", "xNaotox"];
 	*/
 
-	let summonerList = ["FlowerKitten", "AmrasArFeiniel", "Pyrolykos", "Tanonev",
+	/*let summonerList = ["FlowerKitten", "AmrasArFeiniel", "Pyrolykos", "Tanonev",
 						"PerniciousRage", "ILovePotatoChips", "xNaotox", "Hikashikun", "Meteos"];
-
+*/
+	let summonerList = ["Pyrolykos"];
 	prefetchMatchListData(summonerList);
 }
 
@@ -178,9 +181,10 @@ function prefetchMatchListData(summonerNames) {
 }
 
 function prefetchFavoritesTimelinesData() {
-	let summonerList = ["FlowerKitten", "AmrasArFeiniel", "Pyrolykos", "Tanonev",
+	/*let summonerList = ["FlowerKitten", "AmrasArFeiniel", "Pyrolykos", "Tanonev",
 						"PerniciousRage", "ILovePotatoChips", "xNaotox", "Hikashikun", "Meteos"];
-
+*/
+	let summonerList = ["Pyrolykos"];
 	let requestContext = {requestId: 0};
 	let gameIdCache = {};
 	readFiles("./matchlist_data/", function(filename, content) {
@@ -193,7 +197,7 @@ function prefetchFavoritesTimelinesData() {
 
 function fetchAndWriteMatchList(info, name, requestContext) {
 	let promises = [];
-	for (let index = 0; index < 1000; index += 100) {
+	for (let index = 0; index < 5000; index += 100) {
 		promises.push(new Promise((resolve, reject) => {
 			setTimeout(() => fetchMatchlist(info.accountId, name, index, resolve), 1500 * requestContext.requestId);
 		}));
