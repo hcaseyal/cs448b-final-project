@@ -9,9 +9,18 @@
   <script src="DataTables/datatables.min.js"></script>
   <link rel="stylesheet" href="DataTables/datatables.css">
   <link rel="stylesheet" href="node_modules/@blueprintjs/core/dist/blueprint.css">
- <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>-->
+  <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>-->
   <!--<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script> -->
   <script src="jquery-ui.min.js"></script>
+
+  <!-- Include Twitter Bootstrap and jQuery: -->
+  <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css" type="text/css"/>
+  <script type="text/javascript" src="node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+	 
+  <!-- Include the plugin's CSS and JS: -->
+  <script type="text/javascript" src="node_modules/bootstrap-multiselect/dist/js/bootstrap-multiselect.js"></script>
+  <link rel="stylesheet" href="node_modules/bootstrap-multiselect/dist/css/bootstrap-multiselect.css" type="text/css"/>
+
 </head>
 
 <body>
@@ -26,16 +35,16 @@
 
 			<div class="filters">
 				Self:
-				<select class="championSelect-self"></select>
-				<select class="roleSelect-self"></select>
+				<select class="championSelect-self" multiple="multiple"></select>
+				<select class="roleSelect-self" multiple="multiple"></select>
 				<br/>
 				Allies:
-				<select class="championSelect-ally"></select>
-				<select class="roleSelect-ally"></select>
+				<select class="championSelect-ally" multiple="multiple"></select>
+				<select class="roleSelect-ally" multiple="multiple"></select>
 				<br/>
 				Enemies:
-				<select class="championSelect-enemy"></select>
-				<select class="roleSelect-enemy"></select>
+				<select class="championSelect-enemy" multiple="multiple"></select>
+				<select class="roleSelect-enemy" multiple="multiple"></select>
 				<div class="timeSliderWrapper">
 					<div class="timeSlider"> </div>
 				</div>
@@ -67,26 +76,26 @@
 			<table class="analysis-layout">
 				<tbody>
 					<tr>
-						<td>
+						<td class="analysis-cell">
 							<table id="enemyRoleKilled" class="display" width="100%"></table>
 						</td>
-						<td>
+						<td class="analysis-cell">
 							<table id="enemyChampKilled" class="display" width="100%"></table>
 						</td>
 					</tr>
 					<tr>
-						<td>
+						<td class="analysis-cell">
 							<table id="participatingAllyRoles" class="display" width="100%"></table>
 						</td>
-						<td>
+						<td class="analysis-cell">
 							<table id="participatingAllyChamps" class="display" width="100%"></table>
 						</td>
 					</tr>
 					<tr>
-						<td>
+						<td class="analysis-cell">
 							<table id="participatingEnemyRoles" class="display" width="100%"></table>
 						</td>
-						<td>
+						<td class="analysis-cell">
 							<table id="participatingEnemyChamps" class="display" width="100%"></table>
 						</td>
 					</tr>

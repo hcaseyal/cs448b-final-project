@@ -8,9 +8,9 @@ let express = require('express');
 let app = express();
 let fs = require('fs');
 
-const port = 8080; 
+const port = 8082; 
 let baseURL = 'https://na1.api.riotgames.com/lol/';
-let apiKey = 'RGAPI-dce505ed-21a4-4809-89c8-1ccc16ac1bfb';
+let apiKey = 'RGAPI-39f977f6-d666-4fc0-9c90-c61e53913c6e';
 
 const queues = {2: "5v5 Blind Pick", 
 				4: "5v5 Ranked Solo",
@@ -53,7 +53,7 @@ app.listen(port, function () {
 	//prefetchFavoritesTimelinesData(); // these at same time because asynchronous
 	
 	//prefetchMasterLeagueMatchListData();
-	prefetchTimelinesAndDetailsData();
+	//prefetchTimelinesAndDetailsData();
 	console.log(`Server running at http://localhost:${port}/`)
 });
 

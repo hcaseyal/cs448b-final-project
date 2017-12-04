@@ -295,8 +295,7 @@ function createChampionMap(data) {
 }
 
 function drawChampionSelectFilter(componentName) {
-	var select = d3.select(componentName)
-	.on('change', updateMap);
+	var select = d3.select(componentName);
 
 	var championArray = [];				
 	Object.keys(championData).forEach(function(k){
@@ -307,28 +306,45 @@ function drawChampionSelectFilter(componentName) {
 		return d3.ascending(x.name, y.name);
 	});
 
-	sortedData.unshift({name: "All champions", id: 0});
 	var options = select
 		.selectAll('option')
 		.data(sortedData)
 		.enter()
 		.append('option')
 		.text(d => d.name)
-		.attr('value', d => d.key)
+		.attr('value', d => d.key);
+
+	$(componentName).multiselect({
+		includeSelectAllOption: true,
+		selectAllText: "All Champions",
+		onSelectAll: updateMap,
+		onDeselectAll: updateMap,
+		onChange: updateMap,
+		maxHeight: 200,
+		enableCaseInsensitiveFiltering: true
+	});
 }
 
 function drawRoleSelectFilter(componentName) {
-	var select = d3.select(componentName)
-	.on('change', updateMap);
+	var select = d3.select(componentName);
 
-	var roleArray = ["All roles", "Top", "Jungle", "Mid", "ADC", "Support"];				
+	var roleArray = ["Top", "Jungle", "Mid", "ADC", "Support"];				
 	var options = select
 		.selectAll('option')
 		.data(roleArray)
 		.enter()
 		.append('option')
 		.text(d => d)
-		.attr('value', d => d)
+		.attr('value', d => d);
+
+	$(componentName).multiselect({
+		includeSelectAllOption: true,
+		selectAllText: "All Roles",
+		onSelectAll: updateMap,
+		onDeselectAll: updateMap,
+		onChange: updateMap,
+		enableCaseInsensitiveFiltering: true
+	});
 }
 
 function drawRoleAndChampionFilters(championSelectName, roleSelectName) {
@@ -419,8 +435,15 @@ function getMatchDetails(datum) {
 
 function filterByRoles(datum, roles, participantId) {
 	let details = getMatchDetails(datum).participantDetails[participantId];
-	return (roles[0] === "All roles" || 
-		roles.includes(getRole(details.role, details.lane)));
+	if (roles.length === 0 || roles[0].value === "All roles") {
+		return true;
+	}
+	for (let i = 0; i < roles.length; i++) {
+		if (roles[i].value === getRole(details.role, details.lane)) {
+			return true;
+		}
+	}
+	return false;
 }
 
 function filterGenericEvents(datum, champions, roles) {
@@ -490,11 +513,11 @@ function filterAssistsByParticipatingAllies(datum, allyChampions, allyRoles) {
 }
 
 function getSelectedChampions(componentName) {
-	return [d3.select(componentName).node().value];
+	return $(componentName + " option:selected");
 }
 
 function getSelectedRoles(componentName) {
-	return [d3.select(componentName).node().value];
+	return $(componentName + " option:selected");
 }
 
 function updateMap() {
@@ -587,13 +610,13 @@ function filterByTime(datum) {
 
 function filterByChampions(datum, champions, participantId) {
 	let details = getMatchDetails(datum);
-	if (champions[0] === "All champions") {
+	if (champions.length === 0 || champions[0].innerText === "All champions") {
 		return true;
 	}
 	else {
 		let championPlayed = details.participantDetails[participantId].championId;
-		for (let i in champions) {
-			if(championData[champions[i]].id === championPlayed) {
+		for (let i = 0; i < champions.length; i++) {
+			if(championData[champions[i].value].id === championPlayed) {
 				return true;
 			}
 		}
