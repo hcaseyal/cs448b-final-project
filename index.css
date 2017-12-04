@@ -18,6 +18,10 @@
 	fill: purple;
 }
 
+.areaFilter-switch {
+	width: 120px;
+}
+
 .interactive-area {
 	flex: 1;
 	padding: 5px;
