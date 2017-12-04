@@ -8,7 +8,7 @@ let express = require('express');
 let app = express();
 let fs = require('fs');
 
-const port = 8082; 
+const port = 8080; 
 let baseURL = 'https://na1.api.riotgames.com/lol/';
 let apiKey = 'RGAPI-dce505ed-21a4-4809-89c8-1ccc16ac1bfb';
 
@@ -53,7 +53,7 @@ app.listen(port, function () {
 	//prefetchFavoritesTimelinesData(); // these at same time because asynchronous
 	
 	//prefetchMasterLeagueMatchListData();
-	//prefetchTimelinesAndDetailsData();
+	prefetchTimelinesAndDetailsData();
 	console.log(`Server running at http://localhost:${port}/`)
 });
 
@@ -127,7 +127,9 @@ function prefetchTimelinesAndDetailsData() {
 	let requestContext = {requestId: 0};
 	let gameIdCache = {};
 	readFiles("./matchlist_data/", function(filename, content) {
-		onMatchlistFileContent(filename, content, requestContext, gameIdCache)
+		if (!filename.includes("Aconda")) {
+			onMatchlistFileContent(filename, content, requestContext, gameIdCache);
+		}
 	},
 	(error) => console.log(error));
 }
