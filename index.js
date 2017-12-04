@@ -191,7 +191,19 @@ function onBorderDrag(datum) {
 // so that the area filter is on top of the data points
 function onDragEnd(datum, i) {
 	let params = {xVal: datum.x, yVal: datum.y, rVal: datum.r}
+	redrawAreaFilter(params);
+} 
 
+function redrawAreaFilterInPlace() {
+	if (d3.select(".areaFilter-checkbox").property("checked")) {
+		let circleAttributes = d3.select('#circle').node().attributes;
+		let params = {xVal: parseInt(circleAttributes.cx.value), 
+			yVal: parseInt(circleAttributes.cy.value), rVal: parseInt(circleAttributes.r.value)};
+		redrawAreaFilter(params);
+	}
+}
+
+function redrawAreaFilter(params) {
 	d3.select('#circle').remove();
 	d3.select('#circleBorder').remove();
 	drawAreaFilter(params);
@@ -251,10 +263,15 @@ function getAllMatchData(summoner) {
 		};
 
 		matchDetailsPerGame = matchesData.matchDetailsPerGame;
-		updateMap();
+		redrawAreaFilterAndUpdateMap();
 	}
 	xhttp.onerror = () => analysisArea.text("Couldn't retrieve match data. " + xhttp.statusText);
 	xhttp.send();
+}
+
+function redrawAreaFilterAndUpdateMap() {
+	updateMap();
+	redrawAreaFilterInPlace();
 }
 
 function searchForSummoner(summoner) {
@@ -318,9 +335,9 @@ function drawChampionSelectFilter(componentName) {
 	$(componentName).multiselect({
 		includeSelectAllOption: true,
 		selectAllText: "All Champions",
-		onSelectAll: updateMap,
-		onDeselectAll: updateMap,
-		onChange: updateMap,
+		onSelectAll: redrawAreaFilterAndUpdateMap,
+		onDeselectAll: redrawAreaFilterAndUpdateMap,
+		onChange: redrawAreaFilterAndUpdateMap,
 		maxHeight: 200,
 		enableCaseInsensitiveFiltering: true
 	});
@@ -341,9 +358,9 @@ function drawRoleSelectFilter(componentName) {
 	$(componentName).multiselect({
 		includeSelectAllOption: true,
 		selectAllText: "All Roles",
-		onSelectAll: updateMap,
-		onDeselectAll: updateMap,
-		onChange: updateMap,
+		onSelectAll: redrawAreaFilterAndUpdateMap,
+		onDeselectAll: redrawAreaFilterAndUpdateMap,
+		onChange: redrawAreaFilterAndUpdateMap,
 		enableCaseInsensitiveFiltering: true
 	});
 }
@@ -399,7 +416,7 @@ function drawLegend() {
 function onSliderChange(event, ui) {
 	var values = ui.values;
 	redrawSliderText(values);
-	updateMap();
+	redrawAreaFilterAndUpdateMap();
 }
 
 function redrawSliderText(values) {
@@ -410,27 +427,27 @@ function redrawSliderText(values) {
 
 function blueSideSelected() {
 	filterStates["side"] = "blue";
-	updateMap();
+	redrawAreaFilterAndUpdateMap();
 }
 
 function redSideSelected() {
 	filterStates["side"] = "red";
-	updateMap();
+	redrawAreaFilterAndUpdateMap();
 }
 
 function bothSidesSelected() {
 	filterStates["side"] = "both";
-	updateMap();
+	redrawAreaFilterAndUpdateMap();
 }
 
 function winOutcomeSelected() {
 	filterStates["outcome"] = "win";
-	updateMap();
+	redrawAreaFilterAndUpdateMap();
 }
 
 function lossOutcomeSelected() {
 	filterStates["outcome"] = "loss";
-	updateMap();
+	redrawAreaFilterAndUpdateMap();
 }
 
 function bothOutcomesSelected() {
