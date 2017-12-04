@@ -34,36 +34,46 @@
 			</div>
 
 			<div class="filters">
-				<table>
-					<tbody>
-						<tr>
-							<td class="filter-cell filter-cell-header">Self:</td>
-							<td class="filter-cell"><select class="championSelect-self" multiple="multiple"></select></td>
-							<td class="filter-cell"><select class="roleSelect-self" multiple="multiple"></select></td>
-						</tr>
-						<tr>
-							<td class="filter-cell filter-cell-header">Allies:</td>
-							<td class="filter-cell"><select class="championSelect-ally" multiple="multiple"></select></td>
-							<td class="filter-cell"><select class="roleSelect-ally" multiple="multiple"></select></td>
-						</tr>
-						<tr>
-							<td class="filter-cell filter-cell-header">Enemies:</td>
-							<td class="filter-cell"><select class="championSelect-enemy" multiple="multiple"></select></td>
-							<td class="filter-cell"><select class="roleSelect-enemy" multiple="multiple"></select></td>
-						</tr>
-					</tbody>
-				</table>
-
-				<input type="radio" name="sideSelect" id="blueSide" value="blueSide" onclick="blueSideSelected()" />Blue
-				<input type="radio" name="sideSelect" id="redSide" value="redSide" onclick="redSideSelected()" />Red
-				<input type="radio" name="sideSelect" id="bothSides" value="bothSides" onclick="bothSidesSelected()" checked />Both
-
+				<div class="pt-card">
+					<table>
+						<tbody>
+							<tr>
+								<td class="filter-cell filter-cell-header">Self:</td>
+								<td class="filter-cell"><select class="championSelect-self" multiple="multiple"></select></td>
+								<td class="filter-cell"><select class="roleSelect-self" multiple="multiple"></select></td>
+							</tr>
+							<tr>
+								<td class="filter-cell filter-cell-header">Allies:</td>
+								<td class="filter-cell"><select class="championSelect-ally" multiple="multiple"></select></td>
+								<td class="filter-cell"><select class="roleSelect-ally" multiple="multiple"></select></td>
+							</tr>
+							<tr>
+								<td class="filter-cell filter-cell-header">Enemies:</td>
+								<td class="filter-cell"><select class="championSelect-enemy" multiple="multiple"></select></td>
+								<td class="filter-cell"><select class="roleSelect-enemy" multiple="multiple"></select></td>
+							</tr>
+							<tr>
+								<td class="filter-cell filter-cell-header">Starting side:</td>
+								<td class="filter-cell">
+									<input type="radio" name="sideSelect" id="blueSide" value="blueSide" onclick="blueSideSelected()" />Blue
+									<input type="radio" name="sideSelect" id="redSide" value="redSide" onclick="redSideSelected()" />Red
+									<input type="radio" name="sideSelect" id="bothSides" value="bothSides" onclick="bothSidesSelected()" checked />Both
+								</td>
+								<td></td>
+							</tr>
+							<tr>
+								<td class="filter-cell filter-cell-header">Match outcome:</td>
+								<td class="filter-cell">
+									<input type="radio" name="outcomeSelect" id="winOutcome" value="winOutcome" onclick="winOutcomeSelected()" />Win
+									<input type="radio" name="outcomeSelect" id="lossOutcome" value="lossOutcome" onclick="lossOutcomeSelected()" />Loss
+									<input type="radio" name="outcomeSelect" id="bothOutcomes" value="bothOutcomes" onclick="bothOutcomesSelected()" checked />Both
+								</td>
+								<td></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 				<br/>
-				<input type="radio" name="outcomeSelect" id="winOutcome" value="winOutcome" onclick="winOutcomeSelected()" />Win
-				<input type="radio" name="outcomeSelect" id="lossOutcome" value="lossOutcome" onclick="lossOutcomeSelected()" />Loss
-				<input type="radio" name="outcomeSelect" id="bothOutcomes" value="bothOutcomes" onclick="bothOutcomesSelected()" checked />Both
-				<br/>
-
 				<div class="flexContainer">
 					<div class="flexAreaFilterContainer">
 						<label class="pt-control pt-switch areaFilter-switch">
