@@ -8,9 +8,9 @@ let express = require('express');
 let app = express();
 let fs = require('fs');
 
-const port = 8080; 
+const port = 8082; 
 let baseURL = 'https://na1.api.riotgames.com/lol/';
-let apiKey = 'RGAPI-39f977f6-d666-4fc0-9c90-c61e53913c6e';
+let apiKey = 'RGAPI-7275bae2-db22-4485-b2dc-39b95ca6062f';
 
 const queues = {2: "5v5 Blind Pick", 
 				4: "5v5 Ranked Solo",
@@ -50,7 +50,7 @@ app.get('/all-match-data', function (req, res) {
 app.listen(port, function () {
 	//TODO: remove prefetchData
 	//prefetchFavoritesMatchData(); // YO don't call 
-	prefetchFavoritesTimelinesData(); // these at same time because asynchronous
+	//prefetchFavoritesTimelinesData(); // these at same time because asynchronous
 	
 	//prefetchMasterLeagueMatchListData();
 	//prefetchTimelinesAndDetailsData();
@@ -85,7 +85,7 @@ function onMatchlistFileContent(filename, content, requestContext, gameIdCache) 
 			}
 		}
 	}
-	console.log("Number of matches for Pyro: " + matches.length);
+	console.log("Number of matches " + matches.length);
 }
 
 function timelineFilename(matchId) {
