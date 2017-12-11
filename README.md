@@ -6,8 +6,8 @@ clone the repository
 
 cd final-project
 
-Unzip the provided data file (submitted through Canvas) into "final-project". 
-You should now see 3 folders in final-project: matchdetails_data, matchlist_data, and timeline_data
+Unzip the data.zip
+You should now see a data folder with 3 sub-folders: data/matchdetails_data, data/matchlist_data, and data/timeline_data
 
 In one shell tab: `node server.js`
 
