@@ -230,7 +230,7 @@ function calculateDistanceBetweenPoints(x1, y1, x2, y2) {
 
 function searchSummoner() {
 	var summoner = d3.select('.summoner-name').node().value;
-	searchForSummoner(summoner);
+	//searchForSummoner(summoner);
 	getAllMatchData(summoner);
 }
 
