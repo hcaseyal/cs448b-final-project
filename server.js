@@ -49,7 +49,7 @@ app.get('/all-match-data', function (req, res) {
 	getAllMatchData(req, res, id);
 });
 
-app.listen(port, function () {
+app.listen(process.env.PORT || port, function () {
 	//TODO: remove prefetchData
 	//prefetchFavoritesMatchData(); // Don't call 
 	//prefetchFavoritesTimelinesData(); // these at same time because asynchronous
