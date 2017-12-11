@@ -14,6 +14,6 @@ You should now see a data folder with 3 sub-folders: data/matchdetails_data, dat
 
 In one shell tab: `node server.js`
 
-In another shell tab: `python -m SimpleHTTPServer:8000`
+In another shell tab: `python -m SimpleHTTPServer 8000`
 
 navigate to `localhost:8000`
