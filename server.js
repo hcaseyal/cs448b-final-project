@@ -7,10 +7,12 @@ const axios = require('axios');
 let express = require('express');
 let app = express();
 let fs = require('fs');
+let ids =  {"Meteos": 417432, "Hikashikun": 44275597, "FlowerKitten": 201957606, 
+"Pyrolykos": 35446118, "Tanonev": 33894896, "Amrasarfeiniel": 206287698};
 
 const port = 8082; 
 let baseURL = 'https://na1.api.riotgames.com/lol/';
-let apiKey = 'RGAPI-7275bae2-db22-4485-b2dc-39b95ca6062f';
+let apiKey = 'REDACTED';
 
 const queues = {2: "5v5 Blind Pick", 
 				4: "5v5 Ranked Solo",
@@ -49,8 +51,8 @@ app.get('/all-match-data', function (req, res) {
 
 app.listen(port, function () {
 	//TODO: remove prefetchData
-	//prefetchFavoritesMatchData(); // YO don't call 
-	//prefetchFavoritesTimelinesData(); // these at same time because asynchronous
+	//prefetchFavoritesMatchData(); // Don't call 
+	prefetchFavoritesTimelinesData(); // these at same time because asynchronous
 	
 	//prefetchMasterLeagueMatchListData();
 	//prefetchTimelinesAndDetailsData();
@@ -89,15 +91,15 @@ function onMatchlistFileContent(filename, content, requestContext, gameIdCache) 
 }
 
 function timelineFilename(matchId) {
-	return "timeline_data/timeline_" + matchId;
+	return "data/timeline_data/timeline_" + matchId;
 }
 
 function matchListFilename(accountId, name) {
-	return "matchlist_data/matchlist_" + accountId + "_" + name;
+	return "data/matchlist_data/matchlist_" + accountId + "_" + name;
 }
 
 function matchDetailsFilename(matchId) {
-	return "matchdetails_data/matchdetails_" + matchId;
+	return "data/matchdetails_data/matchdetails_" + matchId;
 }
 
 function readFile(filename, onFileContent, onError) {
@@ -128,7 +130,7 @@ function readMatchDetailsFile(matchId, onFileContent, onError) {
 function prefetchTimelinesAndDetailsData() {
 	let requestContext = {requestId: 0};
 	let gameIdCache = {};
-	readFiles("./matchlist_data/", function(filename, content) {
+	readFiles("./data/matchlist_data/", function(filename, content) {
 		if (!filename.includes("Aconda")) {
 			onMatchlistFileContent(filename, content, requestContext, gameIdCache);
 		}
@@ -163,8 +165,7 @@ function prefetchFavoritesMatchData() {
 	/*let summonerList = ["FlowerKitten", "AmrasArFeiniel", "Pyrolykos", "Tanonev",
 						"PerniciousRage", "ILovePotatoChips", "xNaotox", "Hikashikun", "Meteos"];
 */
-	let summonerList = ["Pyrolykos"];
-	prefetchMatchListData(summonerList);
+	prefetchMatchListData(Object.keys(ids));
 }
 
 function prefetchMatchListData(summonerNames) {
@@ -181,23 +182,17 @@ function prefetchMatchListData(summonerNames) {
 }
 
 function prefetchFavoritesTimelinesData() {
-	/*let summonerList = ["FlowerKitten", "AmrasArFeiniel", "Pyrolykos", "Tanonev",
-						"PerniciousRage", "ILovePotatoChips", "xNaotox", "Hikashikun", "Meteos"];
-*/
-	let summonerList = ["Pyrolykos"];
 	let requestContext = {requestId: 0};
 	let gameIdCache = {};
-	readFiles("./matchlist_data/", function(filename, content) {
-		if (summonerList.some(name => filename.includes(name))) {
-			onMatchlistFileContent(filename, content, requestContext, gameIdCache);
-		}
+	readFiles("./data/matchlist_data/", function(filename, content) {
+		onMatchlistFileContent(filename, content, requestContext, gameIdCache);
 	},
 	(error) => console.log(error));
 }
 
 function fetchAndWriteMatchList(info, name, requestContext) {
 	let promises = [];
-	for (let index = 0; index < 5000; index += 100) {
+	for (let index = 0; index < 1000; index += 100) {
 		promises.push(new Promise((resolve, reject) => {
 			setTimeout(() => fetchMatchlist(info.accountId, name, index, resolve), 1500 * requestContext.requestId);
 		}));
@@ -298,21 +293,19 @@ function getSummonerInfo(req, res, name) {
 
 function getAllMatchData(req, res, name) {
 	let retObj = {};
+	let accountId = 417432;
+	for (let acctName in ids) {
+		if (acctName.toUpperCase() === name.toUpperCase()) {
+			accountId = ids[acctName];
+		}
+	}
 
-	fetchSummonerInfo(name)
-		.then(data => { // get summoner info
-			retObj.summoner = data; 
-			return data;
-		})
-		.then(summonerInfo => { // get matchlist
-			let accountId = summonerInfo.accountId;
-			return new Promise((resolve, reject) => {
-				readMatchlistFile(accountId, name, (filename, content) => {
-					retObj.matchlist = JSON.parse(content);
-					resolve(retObj.matchlist);
-				}, (error) => {
-					reject(error);
-				});
+		new Promise((resolve, reject) => {
+			readMatchlistFile(accountId, name, (filename, content) => {
+				retObj.matchlist = JSON.parse(content);
+				resolve(retObj.matchlist);
+			}, (error) => {
+				reject(error);
 			});
 		})
 		.then(matchlist => { // get match timelines
@@ -372,12 +365,12 @@ function getAllMatchData(req, res, name) {
 		})
 		.then(allMatchesData => {
 			fs.writeFile("AllMatchesData", JSON.stringify(allMatchesData));
-			res.send(parseAllMatchesData(retObj.summoner, allMatchesData));
+			res.send(parseAllMatchesData(accountId, allMatchesData));
 			console.log("All matches data sent");
 		});
 }
 
-function parseAllMatchesData(summonerInfo, data) {
+function parseAllMatchesData(accountId, data) {
 	let timelines = data.timelines;
 	let details = data.details;
 	let kills = [];
@@ -400,7 +393,7 @@ function parseAllMatchesData(summonerInfo, data) {
 			continue;
 		}
 		let summonersToParticipants = getSummonersToParticipantsMapping(matchDetails);
-		let participantId = summonersToParticipants[summonerInfo.accountId];
+		let participantId = summonersToParticipants[accountId];
 
 		// Compile kills, deaths, and assists
 		for (let j in matchTimeline.frames) {
