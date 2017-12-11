@@ -52,7 +52,7 @@ app.get('/all-match-data', function (req, res) {
 app.listen(port, function () {
 	//TODO: remove prefetchData
 	//prefetchFavoritesMatchData(); // Don't call 
-	prefetchFavoritesTimelinesData(); // these at same time because asynchronous
+	//prefetchFavoritesTimelinesData(); // these at same time because asynchronous
 	
 	//prefetchMasterLeagueMatchListData();
 	//prefetchTimelinesAndDetailsData();
